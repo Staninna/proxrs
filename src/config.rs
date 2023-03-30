@@ -18,19 +18,19 @@ pub fn config() -> Arc<Mutex<HashMap<String, String>>> {
     conf.insert("port".to_string(), port);
 
     // Load and parse the address
-    let addr =
-        var(format!("{}ADDR", PREFIX)).expect("Failed to load address from environment variables");
+    let addr = var(format!("{}ADDRESS", PREFIX))
+        .expect("Failed to load address from environment variables");
     conf.insert("addr".to_string(), addr);
 
     // Load and parse login path
-    let login_path = var(format!("{}LOGIN_PATH", PREFIX))
+    let login_path = var(format!("{}AUTH_PATH", PREFIX))
         .expect("Failed to load login path from environment variables");
-    conf.insert("login_path".to_string(), login_path);
+    conf.insert("auth_path".to_string(), login_path);
 
     // Load and parse the session token
-    let sesion_token = var(format!("{}SESSION_TOKEN", PREFIX))
+    let sesion_token = var(format!("{}SESSION_COOKIE_NAME", PREFIX))
         .expect("Failed to load session token from environment variables");
-    conf.insert("session_token".to_string(), sesion_token);
+    conf.insert("session_cookie_name".to_string(), sesion_token);
 
     // Create and return the config
     Arc::new(Mutex::new(conf))
