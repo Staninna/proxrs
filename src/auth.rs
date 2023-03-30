@@ -19,10 +19,10 @@ pub async fn handler(
     sessions: Arc<Mutex<HashMap<String, String>>>,
 ) -> Result<Response<Body>, hyper::Error> {
     let auth_path = get_value(&conf, "auth_path").await;
-    let path = req.uri().path();
     let login_path = format!("{}{}", auth_path, get_value(&conf, "login_path").await);
     let logout_path = format!("{}{}", auth_path, get_value(&conf, "logout_path").await);
 
+    let path = req.uri().path();
     match (req.method(), path) {
         // Login
         (&hyper::Method::GET, path) if path == login_path => login_get().await,

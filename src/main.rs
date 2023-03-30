@@ -16,14 +16,10 @@ async fn handle(
     sessions: Arc<Mutex<HashMap<String, String>>>,
 ) -> Result<Response<Body>, hyper::Error> {
     let auth_path = get_value(&conf, "auth_path").await;
-    let login_path = format!("{}/login", auth_path);
-    let logout_path = format!("{}/logout", auth_path);
 
     match (req.method(), req.uri().path()) {
         // Handle the auth route
-        (_, path) if (path == login_path || path == logout_path) => {
-            auth::handler(req, conf, sessions).await
-        }
+        (_, path) if path.starts_with(&auth_path) => auth::handler(req, conf, sessions).await,
 
         // proxy all other routes
         _ => proxy::proxy_handler(req, sessions).await,
