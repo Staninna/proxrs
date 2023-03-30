@@ -42,6 +42,16 @@ pub fn config() -> Arc<Mutex<HashMap<String, String>>> {
         .expect("Failed to load logout path from environment variables");
     conf.insert("logout_path".to_string(), logout_path);
 
+    // Load and parse the static path
+    let static_path = var(format!("{}STATIC_PATH", PREFIX))
+        .expect("Failed to load static path from environment variables");
+    conf.insert("static_path".to_string(), static_path);
+
+    // Load and parse the login page
+    let login_page = var(format!("{}LOGIN_PAGE", PREFIX))
+        .expect("Failed to load login page from environment variables");
+    conf.insert("login_page".to_string(), login_page);
+
     // Create and return the config
     Arc::new(Mutex::new(conf))
 }

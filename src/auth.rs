@@ -2,7 +2,7 @@ use crate::config::get_value;
 use hashbrown::HashMap;
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -25,7 +25,7 @@ pub async fn handler(
     let path = req.uri().path();
     match (req.method(), path) {
         // Login
-        (&hyper::Method::GET, path) if path == login_path => login_get().await,
+        (&hyper::Method::GET, path) if path == login_path => login_get(conf).await,
         (&hyper::Method::POST, path) if path == login_path => login_post(req, conf, sessions).await,
 
         // Logout
@@ -92,13 +92,30 @@ async fn login_post(
 }
 
 // Handles GET requests for login
-async fn login_get() -> Result<Response<Body>, hyper::Error> {
-    // Build the response with the login.html content
-    let mut response = Response::new(Body::from(include_str!("..\\static\\login.html")));
+async fn login_get(
+    conf: Arc<Mutex<HashMap<String, String>>>,
+) -> Result<Response<Body>, hyper::Error> {
+    let static_dir = get_value(&conf, "static_path").await;
+    let login_page_path = PathBuf::from(&static_dir).join(get_value(&conf, "login_page").await);
+
+    // Read the login page from the file system
+    let file = tokio::fs::read_to_string(login_page_path).await;
+
+    let login_page = match file {
+        Ok(login_page) => login_page,
+        Err(_) => {
+            let mut response = Response::new(Body::from("Internal server error"));
+            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+
+            return Ok(response);
+        }
+    };
+
     // Set the content type header
+    let mut response = Response::new(Body::from(login_page));
     response
         .headers_mut()
-        .insert("Content-Type", "text/html".parse().unwrap());
+        .insert("content-type", HeaderValue::from_static("text/html"));
 
     // Return the response
     Ok(response)
@@ -159,7 +176,7 @@ async fn get_session_cookie(
     };
 
     // Get the session token from the cookie header
-    let session_token = match cookie_header.to_str() {
+    match cookie_header.to_str() {
         Ok(cookie_header) => {
             // Split the cookie header into individual cookies
             let cookies: Vec<&str> = cookie_header.split(";").collect();
@@ -173,13 +190,11 @@ async fn get_session_cookie(
             match session_cookie {
                 Some(session_cookie) => {
                     let session_token = session_cookie.split('=').collect::<Vec<&str>>()[1];
-                    session_token.to_string()
+                    Some(session_token.to_string())
                 }
-                None => return None,
+                None => None,
             }
         }
-        Err(_) => return None,
-    };
-
-    Some(session_token)
+        Err(_) => None,
+    }
 }
