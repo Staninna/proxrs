@@ -50,5 +50,6 @@ pub async fn config() -> ConfigStore {
     conf.set("STATIC_PATH", "static_path").await;
     conf.set("LOGIN_PAGE", "login_page").await;
     conf.set("SESSION_EXPIRES", "session_expires").await;
+    conf.set("RENEW_PATH", "renew_path").await;
     conf
 }

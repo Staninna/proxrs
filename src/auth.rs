@@ -1,13 +1,11 @@
-use crate::{config::ConfigStore, session::SessionStore, utils::get_session_cookie, Session};
+use crate::{
+    config::ConfigStore,
+    session::{SessionStore, User},
+    utils::get_session_cookie,
+    Session,
+};
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-
-#[derive(Serialize, Deserialize)]
-struct User {
-    username: String,
-    password: String,
-}
 
 // Main login that handles both GET and POST requests
 pub async fn handler(
@@ -18,6 +16,7 @@ pub async fn handler(
     let auth_path = conf.get("auth_path").await;
     let login_path = format!("{}{}", auth_path, conf.get("login_path").await);
     let logout_path = format!("{}{}", auth_path, conf.get("logout_path").await);
+    let renew_path = format!("{}{}", auth_path, conf.get("renew_path").await);
 
     let path = req.uri().path();
     match (req.method(), path) {
@@ -27,6 +26,9 @@ pub async fn handler(
 
         // Logout
         (&hyper::Method::GET, path) if path == logout_path => logout(req, conf, store).await,
+
+        // Renew session
+        (&hyper::Method::GET, path) if path == renew_path => renew(req, conf, store).await,
 
         // Invalid request
         _ => {
@@ -97,7 +99,7 @@ async fn login_post(
     }
 }
 
-// Handles GET requests for login
+// Send the login page to the client
 async fn login_get(conf: ConfigStore) -> Result<Response<Body>, hyper::Error> {
     let static_dir = conf.get("static_path").await;
     let login_page_path = PathBuf::from(&static_dir).join(conf.get("login_page").await);
@@ -158,6 +160,49 @@ async fn logout(
     // Set the session cookie to an empty string
     let cookie_name = conf.get("session_cookie_name").await;
     let cookie = format!("{}=; HttpOnly; Path=/", cookie_name);
+    response
+        .headers_mut()
+        .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
+
+    // Return the response
+    Ok(response)
+}
+
+// Renew the session token
+pub async fn renew(
+    req: Request<Body>,
+    conf: ConfigStore,
+    store: SessionStore,
+) -> Result<Response<Body>, hyper::Error> {
+    // use get_session_cookie function to extract the session token from the request
+    let session_token = match get_session_cookie(&req, &conf).await {
+        Some(session_token) => session_token,
+        None => {
+            let mut response = Response::new(Body::from("Invalid session"));
+            *response.status_mut() = StatusCode::UNAUTHORIZED;
+
+            return Ok(response);
+        }
+    };
+
+    // Check if the session token is valid
+    if let None = store.get_token(&session_token).await {
+        let mut response = Response::new(Body::from("Invalid session"));
+        *response.status_mut() = StatusCode::UNAUTHORIZED;
+
+        return Ok(response);
+    }
+
+    // Renew the session token
+    let mut session = store.get_token(&session_token).await.unwrap();
+    session.renew(&conf).await;
+
+    // Build the response
+    let mut response = Response::new(Body::from("Session renewed"));
+
+    // Set the session cookie to the new session token
+    let cookie_name = conf.get("session_cookie_name").await;
+    let cookie = format!("{}={}; HttpOnly; Path=/", cookie_name, session.token);
     response
         .headers_mut()
         .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());

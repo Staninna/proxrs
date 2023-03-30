@@ -1,5 +1,6 @@
 use crate::config::ConfigStore;
 use hashbrown::HashMap;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -37,6 +38,12 @@ impl SessionStore {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct User {
+    pub username: String,
+    pub password: String,
+}
+
 #[derive(Clone, Debug)]
 pub struct Session {
     pub user: String,
@@ -64,6 +71,11 @@ impl Session {
             token,
             expires,
         })
+    }
+
+    pub async fn renew(&mut self, conf: &ConfigStore) {
+        let expires_at = conf.get("session_expires").await.parse::<i64>().unwrap();
+        self.expires = chrono::Local::now() + chrono::Duration::seconds(expires_at);
     }
 
     pub fn is_valid(&self) -> bool {
