@@ -1,5 +1,6 @@
+use hashbrown::HashMap;
 use hyper::{Body, Request, Response};
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub async fn proxy_handler(
