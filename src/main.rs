@@ -22,7 +22,7 @@ async fn handle(
         (_, path) if path.starts_with(&auth_path) => auth::handler(req, conf, store).await,
 
         // proxy all other routes
-        _ => proxy::proxy_handler(req, store).await,
+        _ => proxy::proxy_handler(req, conf, store).await,
     }
 }
 
@@ -58,6 +58,7 @@ async fn main() {
             // Perform any necessary cleanup here
 
             println!("Goodbye!");
+            std::process::exit(0);
         });
 
     // Start the server
