@@ -32,8 +32,26 @@ pub async fn handler(
 
         // Invalid request
         _ => {
-            let mut response = Response::new(Body::from("Invalid request"));
-            *response.status_mut() = StatusCode::BAD_REQUEST;
+            // list of valid routes
+            // TODO: Add a way to dynamically generate this list
+            let routes = vec![login_path, logout_path, renew_path];
+            let methods = vec!["GET/POST", "GET", "GET"];
+
+            // Merge the routes and methods into a single vector of strings for the response body
+            let routes = routes
+                .iter()
+                .zip(methods.iter())
+                .map(|(route, method)| format!("{} ({})", route, method))
+                .collect::<Vec<String>>();
+
+            // Build the response with a list of valid routes + Methods in the body
+            let mut response = Response::new(Body::from(format!(
+                "Invalid route. Valid routes: {}",
+                routes.join(", ")
+            )));
+
+            // Set the status code to 404
+            *response.status_mut() = StatusCode::NOT_FOUND;
 
             Ok(response)
         }
