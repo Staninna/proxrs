@@ -1,15 +1,9 @@
-use crate::config::get_value;
-use hashbrown::HashMap;
+use crate::config::ConfigStore;
 use hyper::{Body, Request};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
-pub async fn get_session_cookie(
-    req: &Request<Body>,
-    conf: Arc<Mutex<HashMap<String, String>>>,
-) -> Option<String> {
+pub async fn get_session_cookie(req: &Request<Body>, conf: &ConfigStore) -> Option<String> {
     // Get the session cookie name from the config
-    let cookie_name = get_value(&conf, "session_cookie_name").await;
+    let cookie_name = conf.get("session_cookie").await;
 
     // Get the cookie header from the request
     let cookie_header = match req.headers().get("Cookie") {

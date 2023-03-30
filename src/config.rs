@@ -7,60 +7,48 @@ use dotenv::dotenv;
 
 const PREFIX: &str = "PROXRS_";
 
-pub fn config() -> Arc<Mutex<HashMap<String, String>>> {
-    // Load environment variables from .env file
-    dotenv().ok().expect("Failed to load .env file");
-    let mut conf = HashMap::new();
-
-    // Load and parse the port
-    let port =
-        var(format!("{}PORT", PREFIX)).expect("Failed to load port from environment variables");
-    conf.insert("port".to_string(), port);
-
-    // Load and parse the address
-    let addr = var(format!("{}ADDRESS", PREFIX))
-        .expect("Failed to load address from environment variables");
-    conf.insert("address".to_string(), addr);
-
-    // Load and parse auth path
-    let auth_path = var(format!("{}AUTH_PATH", PREFIX))
-        .expect("Failed to load login path from environment variables");
-    conf.insert("auth_path".to_string(), auth_path);
-
-    // Load and parse the session token
-    let sesion_token = var(format!("{}SESSION_COOKIE_NAME", PREFIX))
-        .expect("Failed to load session token from environment variables");
-    conf.insert("session_cookie_name".to_string(), sesion_token);
-
-    // Load and parse the login path
-    let login_path = var(format!("{}LOGIN_PATH", PREFIX))
-        .expect("Failed to load login path from environment variables");
-    conf.insert("login_path".to_string(), login_path);
-
-    // Load and parse the logout path
-    let logout_path = var(format!("{}LOGOUT_PATH", PREFIX))
-        .expect("Failed to load logout path from environment variables");
-    conf.insert("logout_path".to_string(), logout_path);
-
-    // Load and parse the static path
-    let static_path = var(format!("{}STATIC_PATH", PREFIX))
-        .expect("Failed to load static path from environment variables");
-    conf.insert("static_path".to_string(), static_path);
-
-    // Load and parse the login page
-    let login_page = var(format!("{}LOGIN_PAGE", PREFIX))
-        .expect("Failed to load login page from environment variables");
-    conf.insert("login_page".to_string(), login_page);
-
-    // Load and parse the session expires
-    let session_expires = var(format!("{}SESSION_EXPIRES", PREFIX))
-        .expect("Failed to load session expires from environment variables");
-    conf.insert("session_expires".to_string(), session_expires);
-
-    // Create and return the config
-    Arc::new(Mutex::new(conf))
+#[derive(Clone)]
+pub struct ConfigStore {
+    pub config: Arc<Mutex<HashMap<String, String>>>,
 }
 
-pub async fn get_value(conf: &Arc<Mutex<HashMap<String, String>>>, key: &str) -> String {
-    conf.lock().await.get(key).unwrap().to_string()
+impl ConfigStore {
+    pub fn new() -> Self {
+        ConfigStore {
+            config: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    pub async fn get(&self, key: &str) -> String {
+        let config = self.config.lock().await;
+        config.get(key).unwrap().clone()
+    }
+
+    async fn set(&self, env: &str, key: &str) {
+        let env_value = var(format!("{}{}", PREFIX, env)).expect(
+            format!(
+                "Failed to load {}{} from environment variables",
+                PREFIX, env
+            )
+            .as_str(),
+        );
+        let mut config = self.config.lock().await;
+        config.insert(key.to_string(), env_value);
+    }
+}
+
+pub async fn config() -> ConfigStore {
+    // Load environment variables from .env file
+    dotenv().ok().expect("Failed to load .env file");
+    let conf = ConfigStore::new();
+    conf.set("ADDRESS", "address").await;
+    conf.set("PORT", "port").await;
+    conf.set("AUTH_PATH", "auth_path").await;
+    conf.set("SESSION_COOKIE_NAME", "session_cookie_name").await;
+    conf.set("LOGIN_PATH", "login_path").await;
+    conf.set("LOGOUT_PATH", "logout_path").await;
+    conf.set("STATIC_PATH", "static_path").await;
+    conf.set("LOGIN_PAGE", "login_page").await;
+    conf.set("SESSION_EXPIRES", "session_expires").await;
+    conf
 }

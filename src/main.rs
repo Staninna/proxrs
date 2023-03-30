@@ -1,10 +1,7 @@
-use config::get_value;
-use hashbrown::HashMap;
+use config::ConfigStore;
 use hyper::{service::service_fn, Body, Request, Response, Server};
 use session::{Session, SessionStore};
 use std::net::SocketAddr;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tower::make::Shared;
 mod auth;
 mod config;
@@ -15,10 +12,10 @@ mod utils;
 // Handles incoming requests
 async fn handle(
     req: Request<Body>,
-    conf: Arc<Mutex<HashMap<String, String>>>,
+    conf: ConfigStore,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
-    let auth_path = get_value(&conf, "auth_path").await;
+    let auth_path = conf.get("auth_path").await;
 
     match (req.method(), req.uri().path()) {
         // Handle the auth route
@@ -32,7 +29,7 @@ async fn handle(
 #[tokio::main]
 async fn main() {
     // Load configiuration settings
-    let conf = config::config();
+    let conf = config::config().await;
 
     // Initialize the sessions map
     let sessions = SessionStore::new();
@@ -47,9 +44,9 @@ async fn main() {
     }));
 
     // Define the server address
-    let addr = get_value(&conf, "address").await.parse().unwrap();
-    let port = get_value(&conf, "port").await.parse().unwrap();
-    let addr = SocketAddr::new(addr, port);
+    let ip = conf.get("address").await.parse().unwrap();
+    let port = conf.get("port").await.parse().unwrap();
+    let addr = SocketAddr::new(ip, port);
 
     // Create the server with graceful shutdown capabilities
     let server = Server::bind(&addr)

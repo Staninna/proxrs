@@ -1,9 +1,7 @@
-use crate::{config::get_value, session::SessionStore, utils::get_session_cookie, Session};
-use hashbrown::HashMap;
+use crate::{config::ConfigStore, session::SessionStore, utils::get_session_cookie, Session};
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, sync::Arc};
-use tokio::sync::Mutex;
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize)]
 struct User {
@@ -14,12 +12,12 @@ struct User {
 // Main login that handles both GET and POST requests
 pub async fn handler(
     req: Request<Body>,
-    conf: Arc<Mutex<HashMap<String, String>>>,
+    conf: ConfigStore,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
-    let auth_path = get_value(&conf, "auth_path").await;
-    let login_path = format!("{}{}", auth_path, get_value(&conf, "login_path").await);
-    let logout_path = format!("{}{}", auth_path, get_value(&conf, "logout_path").await);
+    let auth_path = conf.get("auth_path").await;
+    let login_path = format!("{}{}", auth_path, conf.get("login_path").await);
+    let logout_path = format!("{}{}", auth_path, conf.get("logout_path").await);
 
     let path = req.uri().path();
     match (req.method(), path) {
@@ -43,7 +41,7 @@ pub async fn handler(
 // Handles POST requests for login
 async fn login_post(
     req: Request<Body>,
-    conf: Arc<Mutex<HashMap<String, String>>>,
+    conf: ConfigStore,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     // Extract the request body containing user credentials
@@ -79,8 +77,9 @@ async fn login_post(
 
         // Build the response
         let mut response = Response::new(Body::from("Logged in"));
+
         // Set an session cookie
-        let cookie_name = get_value(&conf, "session_cookie_name").await;
+        let cookie_name = conf.get("session_cookie_name").await;
         let cookie = format!("{}={}; HttpOnly; Path=/", cookie_name, session_token);
         response
             .headers_mut()
@@ -99,11 +98,9 @@ async fn login_post(
 }
 
 // Handles GET requests for login
-async fn login_get(
-    conf: Arc<Mutex<HashMap<String, String>>>,
-) -> Result<Response<Body>, hyper::Error> {
-    let static_dir = get_value(&conf, "static_path").await;
-    let login_page_path = PathBuf::from(&static_dir).join(get_value(&conf, "login_page").await);
+async fn login_get(conf: ConfigStore) -> Result<Response<Body>, hyper::Error> {
+    let static_dir = conf.get("static_path").await;
+    let login_page_path = PathBuf::from(&static_dir).join(conf.get("login_page").await);
 
     // Read the login page from the file system
     let file = tokio::fs::read_to_string(login_page_path).await;
@@ -130,11 +127,11 @@ async fn login_get(
 
 async fn logout(
     req: Request<Body>,
-    conf: Arc<Mutex<HashMap<String, String>>>,
+    conf: ConfigStore,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     // use get_session_cookie function to extract the session token from the request
-    let session_token = match get_session_cookie(&req, conf.clone()).await {
+    let session_token = match get_session_cookie(&req, &conf).await {
         Some(session_token) => session_token,
         None => {
             let mut response = Response::new(Body::from("Invalid session"));
@@ -159,7 +156,7 @@ async fn logout(
     let mut response = Response::new(Body::from("Logged out"));
 
     // Set the session cookie to an empty string
-    let cookie_name = get_value(&conf, "session_cookie_name").await;
+    let cookie_name = conf.get("session_cookie_name").await;
     let cookie = format!("{}=; HttpOnly; Path=/", cookie_name);
     response
         .headers_mut()

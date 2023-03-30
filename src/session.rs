@@ -1,4 +1,4 @@
-use crate::config::get_value;
+use crate::config::ConfigStore;
 use hashbrown::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -45,11 +45,7 @@ pub struct Session {
 }
 
 impl Session {
-    pub async fn new(
-        user: String,
-        conf: &Arc<Mutex<HashMap<String, String>>>,
-        store: &SessionStore,
-    ) -> Option<Self> {
+    pub async fn new(user: String, conf: &ConfigStore, store: &SessionStore) -> Option<Self> {
         // Check if user is already logged in
         if let Some(session) = store.get_user(&user).await {
             if session.is_valid() {
@@ -59,7 +55,7 @@ impl Session {
 
         // Generate a new session token
         let token = Uuid::new_v4().to_string();
-        let expires_at = get_value(&conf, "session_expires").await.parse().unwrap();
+        let expires_at = conf.get("session_expires").await.parse::<i64>().unwrap();
         let expires = chrono::Local::now() + chrono::Duration::seconds(expires_at);
 
         // Return the new session
