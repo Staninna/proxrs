@@ -1,4 +1,5 @@
 use crate::config::ConfigStore;
+use chrono::{DateTime, Duration, Utc};
 use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -48,7 +49,7 @@ pub struct User {
 pub struct Session {
     pub user: String,
     pub token: String,
-    pub expires: chrono::DateTime<chrono::Local>,
+    pub expires: DateTime<Utc>,
 }
 
 impl Session {
@@ -63,7 +64,7 @@ impl Session {
         // Generate a new session token
         let token = Uuid::new_v4().to_string();
         let expires_at = conf.get("session_expires").await.parse::<i64>().unwrap();
-        let expires = chrono::Local::now() + chrono::Duration::seconds(expires_at);
+        let expires = Utc::now() + Duration::seconds(expires_at);
 
         // Return the new session
         Some(Session {
@@ -74,11 +75,15 @@ impl Session {
     }
 
     pub async fn renew(&mut self, conf: &ConfigStore) {
+        if !self.is_valid() {
+            return;
+        }
+
         let expires_at = conf.get("session_expires").await.parse::<i64>().unwrap();
-        self.expires = chrono::Local::now() + chrono::Duration::seconds(expires_at);
+        self.expires = Utc::now() + Duration::seconds(expires_at);
     }
 
     pub fn is_valid(&self) -> bool {
-        self.expires > chrono::Local::now()
+        self.expires > Utc::now()
     }
 }

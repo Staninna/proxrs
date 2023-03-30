@@ -3,7 +3,7 @@ use hyper::{Body, Request};
 
 pub async fn get_session_cookie(req: &Request<Body>, conf: &ConfigStore) -> Option<String> {
     // Get the session cookie name from the config
-    let cookie_name = conf.get("session_cookie").await;
+    let cookie_name = conf.get("session_cookie_name").await;
 
     // Get the cookie header from the request
     let cookie_header = match req.headers().get("Cookie") {

@@ -63,11 +63,11 @@ async fn login_post(
     // TODO: Replace this with a database lookup
     if !user.username.is_empty() && !user.password.is_empty() {
         // Generate a session token
-        let session_token = match Session::new(user.username, &conf, &store).await {
+        let session = match Session::new(user.username, &conf, &store).await {
             Some(token) => {
                 // Add the session to the sessions map
                 store.add(token.clone()).await;
-                token.token
+                token
             }
             None => {
                 let mut response = Response::new(Body::from("User already logged in"));
@@ -82,7 +82,15 @@ async fn login_post(
 
         // Set an session cookie
         let cookie_name = conf.get("session_cookie_name").await;
-        let cookie = format!("{}={}; HttpOnly; Path=/", cookie_name, session_token);
+        let cookie = format!(
+            "{}={}; HttpOnly; Path=/; Expires={}",
+            cookie_name,
+            session.token,
+            session.expires.format("%a, %d %b %Y %T GMT")
+        );
+
+        dbg!(&cookie);
+
         response
             .headers_mut()
             .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
