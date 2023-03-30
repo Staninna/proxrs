@@ -107,8 +107,6 @@ async fn login_post(
             session.expires.format("%a, %d %b %Y %T GMT")
         );
 
-        dbg!(&cookie);
-
         response
             .headers_mut()
             .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
