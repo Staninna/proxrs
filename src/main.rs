@@ -1,7 +1,7 @@
 use config::get_value;
 use hashbrown::HashMap;
 use hyper::{service::service_fn, Body, Request, Response, Server};
-use session::Session;
+use session::{Session, SessionStore};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -10,21 +10,22 @@ mod auth;
 mod config;
 mod proxy;
 mod session;
+mod utils;
 
 // Handles incoming requests
 async fn handle(
     req: Request<Body>,
     conf: Arc<Mutex<HashMap<String, String>>>,
-    sessions: Arc<Mutex<HashMap<String, Session>>>,
+    store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     let auth_path = get_value(&conf, "auth_path").await;
 
     match (req.method(), req.uri().path()) {
         // Handle the auth route
-        (_, path) if path.starts_with(&auth_path) => auth::handler(req, conf, sessions).await,
+        (_, path) if path.starts_with(&auth_path) => auth::handler(req, conf, store).await,
 
         // proxy all other routes
-        _ => proxy::proxy_handler(req, sessions).await,
+        _ => proxy::proxy_handler(req, store).await,
     }
 }
 
@@ -34,7 +35,7 @@ async fn main() {
     let conf = config::config();
 
     // Initialize the sessions map
-    let sessions = Arc::new(Mutex::new(HashMap::new()));
+    let sessions = SessionStore::new();
 
     // Create the hyper service
     let conf_clone = conf.clone();

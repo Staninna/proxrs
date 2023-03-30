@@ -1,12 +1,9 @@
-use crate::Session;
-use hashbrown::HashMap;
+use crate::session::SessionStore;
 use hyper::{Body, Request, Response};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 pub async fn proxy_handler(
     _req: Request<Body>,
-    _sessions: Arc<Mutex<HashMap<String, Session>>>,
+    _store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     todo!()
 }
