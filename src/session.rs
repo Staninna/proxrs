@@ -1,4 +1,4 @@
-use crate::config::ConfigStore;
+use crate::config::{ConfigKey::*, ConfigStore};
 use chrono::{DateTime, Duration, Utc};
 use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
@@ -63,7 +63,7 @@ impl Session {
 
         // Generate a new session token
         let token = Uuid::new_v4().to_string();
-        let expires_at = conf.get("session_expires").await.parse::<i64>().unwrap();
+        let expires_at = conf.get(SessionExpires).await.parse::<i64>().unwrap();
         let expires = Utc::now() + Duration::seconds(expires_at);
 
         // Return the new session
@@ -79,7 +79,7 @@ impl Session {
             return;
         }
 
-        let expires_at = conf.get("session_expires").await.parse::<i64>().unwrap();
+        let expires_at = conf.get(SessionExpires).await.parse::<i64>().unwrap();
         self.expires = Utc::now() + Duration::seconds(expires_at);
     }
 

@@ -1,4 +1,4 @@
-use config::ConfigStore;
+use config::{ConfigKey::*, ConfigStore};
 use hyper::{service::service_fn, Body, Request, Response, Server};
 use session::{Session, SessionStore};
 use std::net::SocketAddr;
@@ -15,7 +15,7 @@ async fn handle(
     conf: ConfigStore,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
-    let auth_path = conf.get("auth_path").await;
+    let auth_path = conf.get(AuthPath).await;
 
     match (req.method(), req.uri().path()) {
         // Handle the auth route
@@ -44,8 +44,8 @@ async fn main() {
     }));
 
     // Define the server address
-    let ip = conf.get("address").await.parse().unwrap();
-    let port = conf.get("port").await.parse().unwrap();
+    let ip = conf.get(Ip).await.parse().unwrap();
+    let port = conf.get(Port).await.parse().unwrap();
     let addr = SocketAddr::new(ip, port);
 
     // Create the server with graceful shutdown capabilities

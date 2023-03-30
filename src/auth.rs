@@ -1,5 +1,5 @@
 use crate::{
-    config::ConfigStore,
+    config::{ConfigKey::*, ConfigStore},
     session::{SessionStore, User},
     utils::get_session_cookie,
     Session,
@@ -13,10 +13,10 @@ pub async fn handler(
     conf: ConfigStore,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
-    let auth_path = conf.get("auth_path").await;
-    let login_path = format!("{}{}", auth_path, conf.get("login_path").await);
-    let logout_path = format!("{}{}", auth_path, conf.get("logout_path").await);
-    let renew_path = format!("{}{}", auth_path, conf.get("renew_path").await);
+    let auth_path = conf.get(AuthPath).await;
+    let login_path = format!("{}{}", auth_path, conf.get(LoginPath).await);
+    let logout_path = format!("{}{}", auth_path, conf.get(LogoutPath).await);
+    let renew_path = format!("{}{}", auth_path, conf.get(RenewPath).await);
 
     let path = req.uri().path();
     match (req.method(), path) {
@@ -81,7 +81,7 @@ async fn login_post(
         let mut response = Response::new(Body::from("Logged in"));
 
         // Set an session cookie
-        let cookie_name = conf.get("session_cookie_name").await;
+        let cookie_name = conf.get(SessionCookieName).await;
         let cookie = format!(
             "{}={}; HttpOnly; Path=/; Expires={}",
             cookie_name,
@@ -109,8 +109,8 @@ async fn login_post(
 
 // Send the login page to the client
 async fn login_get(conf: ConfigStore) -> Result<Response<Body>, hyper::Error> {
-    let static_dir = conf.get("static_path").await;
-    let login_page_path = PathBuf::from(&static_dir).join(conf.get("login_page").await);
+    let static_dir = conf.get(StaticPath).await;
+    let login_page_path = PathBuf::from(&static_dir).join(conf.get(LoginPage).await);
 
     // Read the login page from the file system
     let file = tokio::fs::read_to_string(login_page_path).await;
@@ -166,7 +166,7 @@ async fn logout(
     let mut response = Response::new(Body::from("Logged out"));
 
     // Set the session cookie to an empty string
-    let cookie_name = conf.get("session_cookie_name").await;
+    let cookie_name = conf.get(SessionCookieName).await;
     let cookie = format!("{}=; HttpOnly; Path=/", cookie_name);
     response
         .headers_mut()
@@ -209,7 +209,7 @@ pub async fn renew(
     let mut response = Response::new(Body::from("Session renewed"));
 
     // Set the session cookie to the new session token
-    let cookie_name = conf.get("session_cookie_name").await;
+    let cookie_name = conf.get(SessionCookieName).await;
     let cookie = format!("{}={}; HttpOnly; Path=/", cookie_name, session.token);
     response
         .headers_mut()
