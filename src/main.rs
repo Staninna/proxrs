@@ -60,6 +60,8 @@ async fn main() {
             println!("Shutting down...");
 
             // Perform any necessary cleanup here
+
+            println!("Goodbye!");
         });
 
     // Start the server
@@ -67,6 +69,4 @@ async fn main() {
     if let Err(e) = server.await {
         eprintln!("Server error: {}", e);
     }
-
-    println!("Server stopped");
 }
