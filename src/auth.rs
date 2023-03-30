@@ -144,7 +144,7 @@ async fn logout(
     };
 
     // Check if the session token is valid
-    if let None = store.get_token(&session_token).await {
+    if store.get_token(&session_token).await.is_none() {
         let mut response = Response::new(Body::from("Invalid session"));
         *response.status_mut() = StatusCode::UNAUTHORIZED;
 
@@ -186,7 +186,7 @@ pub async fn renew(
     };
 
     // Check if the session token is valid
-    if let None = store.get_token(&session_token).await {
+    if store.get_token(&session_token).await.is_none() {
         let mut response = Response::new(Body::from("Invalid session"));
         *response.status_mut() = StatusCode::UNAUTHORIZED;
 

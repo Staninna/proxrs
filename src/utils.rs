@@ -15,7 +15,7 @@ pub async fn get_session_cookie(req: &Request<Body>, conf: &ConfigStore) -> Opti
     match cookie_header.to_str() {
         Ok(cookie_header) => {
             // Split the cookie header into individual cookies
-            let cookies: Vec<&str> = cookie_header.split(";").collect();
+            let cookies: Vec<&str> = cookie_header.split(';').collect();
 
             // Find the session cookie
             let session_cookie = cookies

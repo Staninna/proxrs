@@ -25,13 +25,12 @@ impl ConfigStore {
     }
 
     async fn set(&self, env: &str, key: &str) {
-        let env_value = var(format!("{}{}", PREFIX, env)).expect(
-            format!(
+        let env_value = var(format!("{}{}", PREFIX, env)).unwrap_or_else(|_| {
+            panic!(
                 "Failed to load {}{} from environment variables",
                 PREFIX, env
             )
-            .as_str(),
-        );
+        });
         let mut config = self.config.lock().await;
         config.insert(key.to_string(), env_value);
     }
@@ -39,7 +38,7 @@ impl ConfigStore {
 
 pub async fn config() -> ConfigStore {
     // Load environment variables from .env file
-    dotenv().ok().expect("Failed to load .env file");
+    dotenv().expect("Failed to load .env file");
     let conf = ConfigStore::new();
     conf.set("ADDRESS", "address").await;
     conf.set("PORT", "port").await;
