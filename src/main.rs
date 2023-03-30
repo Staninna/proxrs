@@ -1,5 +1,5 @@
+use hashbrown::HashMap;
 use hyper::{service::service_fn, Body, Request, Response, Server};
-use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -11,11 +11,14 @@ mod proxy;
 // Handles incoming requests
 async fn handle(
     req: Request<Body>,
+    conf: Arc<Mutex<HashMap<String, String>>>,
     sessions: Arc<Mutex<HashMap<String, String>>>,
 ) -> Result<Response<Body>, hyper::Error> {
+    let login_path = conf.lock().await.get("login_path").unwrap().to_string();
+
     match (req.method(), req.uri().path()) {
         // Handle the login route
-        (_, "/proxy/login") => auth::login_handler(req, sessions).await,
+        (_, path) if path == login_path => auth::login_handler(req, sessions).await,
 
         // proxy all other routes
         _ => proxy::proxy_handler(req, sessions).await,
@@ -31,13 +34,30 @@ async fn main() {
     let sessions: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
 
     // Create the hyper service
+    let conf_clone = conf.clone();
     let service = Shared::new(service_fn(move |req: Request<Body>| {
         let sessions = sessions.clone();
-        handle(req, sessions)
+        let conf = conf_clone.clone();
+
+        handle(req, conf, sessions)
     }));
 
     // Define the server address
-    let addr = SocketAddr::from((conf.addr, conf.port));
+    let addr = conf
+        .lock()
+        .await
+        .get("addr")
+        .unwrap()
+        .parse()
+        .expect("Invalid address");
+    let port = conf
+        .lock()
+        .await
+        .get("port")
+        .unwrap()
+        .parse()
+        .expect("Invalid port");
+    let addr = SocketAddr::new(addr, port);
 
     // Create the server with graceful shutdown capabilities
     let server = Server::bind(&addr)
