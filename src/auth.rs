@@ -23,10 +23,10 @@ pub async fn handler(
 
     match (req.method(), path) {
         // Login
+        (&hyper::Method::GET, path) if path == format!("{}/login", auth_path) => login_get().await,
         (&hyper::Method::POST, path) if path == format!("{}/login", auth_path) => {
             login_post(req, conf, sessions).await
         }
-        (&hyper::Method::GET, path) if path == format!("{}/login", auth_path) => login_get().await,
 
         // Logout
         (&hyper::Method::GET, path) if path == format!("{}/logout", auth_path) => {
