@@ -1,3 +1,4 @@
+use crate::config::get_value;
 use hashbrown::HashMap;
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -17,7 +18,7 @@ pub async fn handler(
     conf: Arc<Mutex<HashMap<String, String>>>,
     sessions: Arc<Mutex<HashMap<String, String>>>,
 ) -> Result<Response<Body>, hyper::Error> {
-    let auth_path = conf.lock().await.get("auth_path").unwrap().to_string();
+    let auth_path = get_value(&conf, "auth_path").await;
     let path = req.uri().path();
 
     match (req.method(), path) {
@@ -74,12 +75,7 @@ async fn login_post(
         // Build the response
         let mut response = Response::new(Body::from("Logged in"));
         // Set an session cookie
-        let cookie_name = conf
-            .lock()
-            .await
-            .get("session_cookie_name")
-            .unwrap()
-            .to_string();
+        let cookie_name = get_value(&conf, "session_cookie_name").await;
         let cookie = format!("{}={}; HttpOnly; Path=/", cookie_name, session_token);
         response
             .headers_mut()
@@ -141,12 +137,7 @@ async fn logout(
     let mut response = Response::new(Body::from("Logged out"));
 
     // Set the session cookie to an empty string
-    let cookie_name = conf
-        .lock()
-        .await
-        .get("session_cookie_name")
-        .unwrap()
-        .to_string();
+    let cookie_name = get_value(&conf, "session_cookie_name").await;
     let cookie = format!("{}=; HttpOnly; Path=/", cookie_name);
     response
         .headers_mut()
@@ -161,12 +152,7 @@ async fn get_session_cookie(
     conf: Arc<Mutex<HashMap<String, String>>>,
 ) -> Option<String> {
     // Get the session cookie name from the config
-    let cookie_name = conf
-        .lock()
-        .await
-        .get("session_cookie_name")
-        .unwrap()
-        .to_string();
+    let cookie_name = get_value(&conf, "session_cookie_name").await;
 
     // Get the cookie header from the request
     let cookie_header = match req.headers().get("Cookie") {

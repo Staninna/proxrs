@@ -20,7 +20,7 @@ pub fn config() -> Arc<Mutex<HashMap<String, String>>> {
     // Load and parse the address
     let addr = var(format!("{}ADDRESS", PREFIX))
         .expect("Failed to load address from environment variables");
-    conf.insert("addr".to_string(), addr);
+    conf.insert("address".to_string(), addr);
 
     // Load and parse login path
     let login_path = var(format!("{}AUTH_PATH", PREFIX))
@@ -34,4 +34,8 @@ pub fn config() -> Arc<Mutex<HashMap<String, String>>> {
 
     // Create and return the config
     Arc::new(Mutex::new(conf))
+}
+
+pub async fn get_value(conf: &Arc<Mutex<HashMap<String, String>>>, key: &str) -> String {
+    conf.lock().await.get(key).unwrap().to_string()
 }

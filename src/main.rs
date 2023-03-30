@@ -1,3 +1,4 @@
+use config::get_value;
 use hashbrown::HashMap;
 use hyper::{service::service_fn, Body, Request, Response, Server};
 use std::net::SocketAddr;
@@ -14,7 +15,7 @@ async fn handle(
     conf: Arc<Mutex<HashMap<String, String>>>,
     sessions: Arc<Mutex<HashMap<String, String>>>,
 ) -> Result<Response<Body>, hyper::Error> {
-    let auth_path = conf.lock().await.get("auth_path").unwrap().to_string();
+    let auth_path = get_value(&conf, "auth_path").await;
     let login_path = format!("{}/login", auth_path);
     let logout_path = format!("{}/logout", auth_path);
 
@@ -47,20 +48,8 @@ async fn main() {
     }));
 
     // Define the server address
-    let addr = conf
-        .lock()
-        .await
-        .get("addr")
-        .unwrap()
-        .parse()
-        .expect("Invalid address");
-    let port = conf
-        .lock()
-        .await
-        .get("port")
-        .unwrap()
-        .parse()
-        .expect("Invalid port");
+    let addr = get_value(&conf, "address").await.parse().unwrap();
+    let port = get_value(&conf, "port").await.parse().unwrap();
     let addr = SocketAddr::new(addr, port);
 
     // Create the server with graceful shutdown capabilities
