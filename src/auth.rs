@@ -20,8 +20,8 @@ pub async fn handler(
 ) -> Result<Response<Body>, hyper::Error> {
     let auth_path = get_value(&conf, "auth_path").await;
     let path = req.uri().path();
-    let login_path = format!("{}/{}", auth_path, get_value(&conf, "login_path").await);
-    let logout_path = format!("{}/{}", auth_path, get_value(&conf, "logout_path").await);
+    let login_path = format!("{}{}", auth_path, get_value(&conf, "login_path").await);
+    let logout_path = format!("{}{}", auth_path, get_value(&conf, "logout_path").await);
 
     match (req.method(), path) {
         // Login
