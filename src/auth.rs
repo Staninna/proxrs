@@ -20,18 +20,16 @@ pub async fn handler(
 ) -> Result<Response<Body>, hyper::Error> {
     let auth_path = get_value(&conf, "auth_path").await;
     let path = req.uri().path();
+    let login_path = format!("{}/{}", auth_path, get_value(&conf, "login_path").await);
+    let logout_path = format!("{}/{}", auth_path, get_value(&conf, "logout_path").await);
 
     match (req.method(), path) {
         // Login
-        (&hyper::Method::GET, path) if path == format!("{}/login", auth_path) => login_get().await,
-        (&hyper::Method::POST, path) if path == format!("{}/login", auth_path) => {
-            login_post(req, conf, sessions).await
-        }
+        (&hyper::Method::GET, path) if path == login_path => login_get().await,
+        (&hyper::Method::POST, path) if path == login_path => login_post(req, conf, sessions).await,
 
         // Logout
-        (&hyper::Method::GET, path) if path == format!("{}/logout", auth_path) => {
-            logout(req, conf, sessions).await
-        }
+        (&hyper::Method::GET, path) if path == logout_path => logout(req, conf, sessions).await,
 
         // Invalid request
         _ => {

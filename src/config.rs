@@ -22,15 +22,25 @@ pub fn config() -> Arc<Mutex<HashMap<String, String>>> {
         .expect("Failed to load address from environment variables");
     conf.insert("address".to_string(), addr);
 
-    // Load and parse login path
-    let login_path = var(format!("{}AUTH_PATH", PREFIX))
+    // Load and parse auth path
+    let auth_path = var(format!("{}AUTH_PATH", PREFIX))
         .expect("Failed to load login path from environment variables");
-    conf.insert("auth_path".to_string(), login_path);
+    conf.insert("auth_path".to_string(), auth_path);
 
     // Load and parse the session token
     let sesion_token = var(format!("{}SESSION_COOKIE_NAME", PREFIX))
         .expect("Failed to load session token from environment variables");
     conf.insert("session_cookie_name".to_string(), sesion_token);
+
+    // Load and parse the login path
+    let login_path = var(format!("{}LOGIN_PATH", PREFIX))
+        .expect("Failed to load login path from environment variables");
+    conf.insert("login_path".to_string(), login_path);
+
+    // Load and parse the logout path
+    let logout_path = var(format!("{}LOGOUT_PATH", PREFIX))
+        .expect("Failed to load logout path from environment variables");
+    conf.insert("logout_path".to_string(), logout_path);
 
     // Create and return the config
     Arc::new(Mutex::new(conf))
