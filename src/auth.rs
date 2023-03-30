@@ -1,10 +1,9 @@
-use crate::config::get_value;
+use crate::{config::get_value, Session};
 use hashbrown::HashMap;
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, sync::Arc};
 use tokio::sync::Mutex;
-use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 struct User {
@@ -16,7 +15,7 @@ struct User {
 pub async fn handler(
     req: Request<Body>,
     conf: Arc<Mutex<HashMap<String, String>>>,
-    sessions: Arc<Mutex<HashMap<String, String>>>,
+    sessions: Arc<Mutex<HashMap<String, Session>>>,
 ) -> Result<Response<Body>, hyper::Error> {
     let auth_path = get_value(&conf, "auth_path").await;
     let login_path = format!("{}{}", auth_path, get_value(&conf, "login_path").await);
@@ -45,7 +44,7 @@ pub async fn handler(
 async fn login_post(
     req: Request<Body>,
     conf: Arc<Mutex<HashMap<String, String>>>,
-    sessions: Arc<Mutex<HashMap<String, String>>>,
+    sessions: Arc<Mutex<HashMap<String, Session>>>,
 ) -> Result<Response<Body>, hyper::Error> {
     // Extract the request body containing user credentials
     let body_bytes = hyper::body::to_bytes(req.into_body()).await?;
@@ -54,7 +53,7 @@ async fn login_post(
         Ok(user) => user,
         Err(_) => {
             let mut response = Response::new(Body::from("Invalid credentials"));
-            *response.status_mut() = StatusCode::UNAUTHORIZED;
+            *response.status_mut() = StatusCode::BAD_REQUEST;
 
             return Ok(response);
         }
@@ -64,11 +63,20 @@ async fn login_post(
     // TODO: Replace this with a database lookup
     if !user.username.is_empty() && !user.password.is_empty() {
         // Generate a session token
-        let session_token = Uuid::new_v4().to_string();
-        sessions
-            .lock()
-            .await
-            .insert(session_token.clone(), user.username);
+        let session_token = match Session::new(user.username, &conf, sessions.clone()).await {
+            Some(token) => {
+                // Add the session to the sessions map
+                let mut sessions = sessions.lock().await;
+                sessions.insert(token.user.clone(), token.clone());
+                token.user
+            }
+            None => {
+                let mut response = Response::new(Body::from("User already logged in"));
+                *response.status_mut() = StatusCode::BAD_REQUEST;
+
+                return Ok(response);
+            }
+        };
 
         // Build the response
         let mut response = Response::new(Body::from("Logged in"));
@@ -124,7 +132,7 @@ async fn login_get(
 async fn logout(
     req: Request<Body>,
     conf: Arc<Mutex<HashMap<String, String>>>,
-    sessions: Arc<Mutex<HashMap<String, String>>>,
+    sessions: Arc<Mutex<HashMap<String, Session>>>,
 ) -> Result<Response<Body>, hyper::Error> {
     // use get_session_cookie function to extract the session token from the request
     let session_token = match get_session_cookie(&req, conf.clone()).await {

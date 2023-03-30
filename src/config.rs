@@ -52,6 +52,11 @@ pub fn config() -> Arc<Mutex<HashMap<String, String>>> {
         .expect("Failed to load login page from environment variables");
     conf.insert("login_page".to_string(), login_page);
 
+    // Load and parse the session expires
+    let session_expires = var(format!("{}SESSION_EXPIRES", PREFIX))
+        .expect("Failed to load session expires from environment variables");
+    conf.insert("session_expires".to_string(), session_expires);
+
     // Create and return the config
     Arc::new(Mutex::new(conf))
 }

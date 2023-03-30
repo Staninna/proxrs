@@ -3,17 +3,19 @@ use hashbrown::HashMap;
 use hyper::{service::service_fn, Body, Request, Response, Server};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use token::Session;
 use tokio::sync::Mutex;
 use tower::make::Shared;
 mod auth;
 mod config;
 mod proxy;
+mod token;
 
 // Handles incoming requests
 async fn handle(
     req: Request<Body>,
     conf: Arc<Mutex<HashMap<String, String>>>,
-    sessions: Arc<Mutex<HashMap<String, String>>>,
+    sessions: Arc<Mutex<HashMap<String, Session>>>,
 ) -> Result<Response<Body>, hyper::Error> {
     let auth_path = get_value(&conf, "auth_path").await;
 
@@ -32,7 +34,7 @@ async fn main() {
     let conf = config::config();
 
     // Initialize the sessions map
-    let sessions: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let sessions = Arc::new(Mutex::new(HashMap::new()));
 
     // Create the hyper service
     let conf_clone = conf.clone();
