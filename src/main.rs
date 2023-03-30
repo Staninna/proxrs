@@ -1,15 +1,15 @@
 use config::get_value;
 use hashbrown::HashMap;
 use hyper::{service::service_fn, Body, Request, Response, Server};
+use session::Session;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use token::Session;
 use tokio::sync::Mutex;
 use tower::make::Shared;
 mod auth;
 mod config;
 mod proxy;
-mod token;
+mod session;
 
 // Handles incoming requests
 async fn handle(
