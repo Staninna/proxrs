@@ -963,6 +963,7 @@ dependencies = [
  "hyper-tls",
  "rand",
  "serde",
+ "serde_json",
  "serde_urlencoded",
  "tera",
  "tokio",
