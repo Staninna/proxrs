@@ -1,30 +1,14 @@
-use config::{ConfigKey::*, ConfigStore};
-use hyper::{service::service_fn, Body, Request, Response, Server};
-use session::{Session, SessionStore};
+use config::ConfigKey::*;
+use hyper::{service::service_fn, Body, Request, Server};
+use proxy::proxy;
+use session::SessionStore;
 use std::net::SocketAddr;
 use tower::make::Shared;
-mod auth;
 mod config;
+mod error;
+mod login;
 mod proxy;
 mod session;
-mod utils;
-
-// Handles incoming requests
-async fn handle(
-    req: Request<Body>,
-    conf: ConfigStore,
-    store: SessionStore,
-) -> Result<Response<Body>, hyper::Error> {
-    let auth_path = conf.get(AuthPath).await;
-
-    match (req.method(), req.uri().path()) {
-        // Handle the auth route
-        (_, path) if path.starts_with(&auth_path) => auth::handler(req, conf, store).await,
-
-        // proxy all other routes
-        _ => proxy::proxy_handler(req, conf, store).await,
-    }
-}
 
 #[tokio::main]
 async fn main() {
@@ -40,7 +24,7 @@ async fn main() {
         let sessions = sessions.clone();
         let conf = conf_clone.clone();
 
-        handle(req, conf, sessions)
+        proxy(req, conf, sessions)
     }));
 
     // Define the server address
