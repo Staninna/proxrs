@@ -1,5 +1,6 @@
 use crate::{
     config::ConfigStore,
+    error::internal_error,
     login::{login, login_page},
     session::{get_session_cookie, SessionStore},
 };
@@ -13,9 +14,12 @@ pub async fn proxy(
     tera: Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
-    // If request is post to /proxrs/login then handle the login
-    if req.uri().path() == "/proxrs/login" && req.method() == Method::POST {
-        return login(req, conf, tera, store).await;
+    // Check for special routes
+    match (req.method(), req.uri().path()) {
+        (&Method::POST, "/proxrs/login") => return login(req, conf, tera, store).await,
+        // Temporary route for testing
+        (&Method::GET, "/proxrs/internal_error") => return internal_error(&conf, tera).await,
+        _ => {}
     }
 
     // Check if the request has an session cookie
