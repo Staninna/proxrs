@@ -62,7 +62,7 @@ pub async fn login_page(conf: &ConfigStore, tera: Tera) -> Result<Response<Body>
     let login_page_path = conf.get(LoginPageTemplate).await;
 
     // Load the login page using the tera template engine
-    let login_page = match tera.render(&login_page_path, &tera::Context::new()) {
+    match tera.render(&login_page_path, &tera::Context::new()) {
         Ok(login_page) => login_page,
         Err(_) => return internal_error(&conf, tera).await,
     };

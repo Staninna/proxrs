@@ -52,6 +52,11 @@
             button:hover {
                 background-color: #ddd;
             }
+
+            a {
+                text-decoration: none;
+                color: #333;
+            }
         </style>
     </head>
     <body>
@@ -62,9 +67,12 @@
                 to complete your request. This may be due to high traffic or an error in
                 the application.
             </p>
-            <p>Please try again later, or contact us if the problem persists.</p>
-            <!-- TODO: choose random internet activity to encourage user to do while waiting -->
-            <button onclick="window.location.href='/'">Return to Homepage</button>
+            <p>
+                Please try again later, while you wait, why you don't try this activity?
+            </p>
+            <button>
+                <a href="{{ activity_url }}">{{ activity_description }}</a>
+            </button>
         </div>
     </body>
 </html>
