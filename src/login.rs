@@ -4,11 +4,13 @@ use crate::{
     session::{Session, SessionStore, User},
 };
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
+use tera::Tera;
 
 // Handles login requests
 pub async fn login(
     req: Request<Body>,
     conf: ConfigStore,
+    tera: Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     // Extract the request body containing user credentials
@@ -17,7 +19,7 @@ pub async fn login(
     // Deserialize the request body into a User struct
     let user: User = match serde_urlencoded::from_bytes(&body_bytes) {
         Ok(user) => user,
-        Err(_) => return login_page(&conf).await,
+        Err(_) => return login_page(&conf, tera).await,
     };
 
     // Validate user credentials
@@ -52,29 +54,28 @@ pub async fn login(
         return redirect(response);
     }
     // If the user is not valid, return the login page
-    login_page(&conf).await
+    login_page(&conf, tera).await
 }
 
-pub async fn login_page(conf: &ConfigStore) -> Result<Response<Body>, hyper::Error> {
+pub async fn login_page(conf: &ConfigStore, tera: Tera) -> Result<Response<Body>, hyper::Error> {
     // Get the login page path from the config
-    let login_page_path = conf.get(LoginPage).await;
+    let login_page_path = conf.get(LoginPageTemplate).await;
 
-    // Load the login page
-    match tokio::fs::read_to_string(login_page_path).await {
-        // If the login page was loaded successfully, return it
-        Ok(login_page) => {
-            let mut response = Response::new(Body::from(login_page));
+    // Load the login page using the tera template engine
+    let login_page = match tera.render(&login_page_path, &tera::Context::new()) {
+        Ok(login_page) => login_page,
+        Err(_) => return internal_error(&conf, tera).await,
+    };
 
-            // Set the content type header
-            response
-                .headers_mut()
-                .insert("Content-Type", "text/html".parse().unwrap());
+    // Create the response
+    let mut response = Response::new(Body::from(login_page));
 
-            Ok(response)
-        }
-        // If the login page could not be loaded, return an internal server error
-        Err(_) => internal_error(conf).await,
-    }
+    // Set the content type
+    response
+        .headers_mut()
+        .insert("Content-Type", "text/html".parse().unwrap());
+
+    Ok(response)
 }
 
 fn redirect(mut response: Response<Body>) -> Result<Response<Body>, hyper::Error> {

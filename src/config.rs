@@ -1,9 +1,8 @@
+use dotenv::dotenv;
 use dotenv::var;
 use hashbrown::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
-use dotenv::dotenv;
 
 const PREFIX: &str = "PROXRS_";
 
@@ -11,10 +10,11 @@ const PREFIX: &str = "PROXRS_";
 pub enum ConfigKey {
     Ip,
     Port,
-    LoginPage,
     SessionDuration,
+    TeraTemplatesDir,
+    LoginPageTemplate,
     SessionCookieName,
-    InternalErrorPage,
+    InternalErrorTemplate,
 }
 
 #[derive(Clone)]
@@ -50,10 +50,12 @@ pub async fn config() -> ConfigStore {
     let conf = ConfigStore::new();
     conf.set("IP", Ip).await;
     conf.set("PORT", Port).await;
-    conf.set("LOGIN_PAGE", LoginPage).await;
     conf.set("SESSION_DURATION", SessionDuration).await;
+    conf.set("TERA_TEMPLATES_DIR", TeraTemplatesDir).await;
     conf.set("SESSION_COOKIE_NAME", SessionCookieName).await;
-    conf.set("INTERNAL_ERROR_PAGE", InternalErrorPage).await;
+    conf.set("LOGIN_PAGE_TEMPLATE", LoginPageTemplate).await;
+    conf.set("INTERNAL_ERROR_TEMPLATE", InternalErrorTemplate)
+        .await;
 
     conf
 }

@@ -3,23 +3,25 @@ use crate::{
     login::{login, login_page},
     session::{get_session_cookie, SessionStore},
 };
-use hyper::{Body, Client, Request, Response};
+use hyper::{Body, Client, Method, Request, Response};
+use tera::Tera;
 
 // Handles incoming requests
 pub async fn proxy(
     req: Request<Body>,
     conf: ConfigStore,
+    tera: Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     // If request is post to /proxrs/login then handle the login
-    if req.uri().path() == "/proxrs/login" && req.method() == "POST" {
-        return login(req, conf, store).await;
+    if req.uri().path() == "/proxrs/login" && req.method() == Method::POST {
+        return login(req, conf, tera, store).await;
     }
 
     // Check if the request has an session cookie
     let session_token = match get_session_cookie(&req, &conf).await {
         Some(session_token) => session_token,
-        None => return login_page(&conf).await,
+        None => return login_page(&conf, tera).await,
     };
 
     // Check if the session token is valid
@@ -28,10 +30,10 @@ pub async fn proxy(
             true => token,
             false => {
                 store.remove(&session_token).await;
-                return login_page(&conf).await;
+                return login_page(&conf, tera).await;
             }
         },
-        None => return login_page(&conf).await,
+        None => return login_page(&conf, tera).await,
     };
 
     // Renew the session token

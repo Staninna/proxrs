@@ -1,16 +1,17 @@
 use crate::config::{ConfigKey::*, ConfigStore};
 use hyper::{Body, Response, StatusCode};
+use tera::Tera;
 
-pub async fn internal_error(conf: &ConfigStore) -> Result<Response<Body>, hyper::Error> {
+pub async fn internal_error(
+    conf: &ConfigStore,
+    tera: Tera,
+) -> Result<Response<Body>, hyper::Error> {
     // Get the internal error page path from the config
-    let internal_error_page_path = conf.get(InternalErrorPage).await;
+    let internal_error_page_path = conf.get(InternalErrorTemplate).await;
 
-    let mut response = match tokio::fs::read_to_string(internal_error_page_path).await {
-        Ok(page) => {
-            let mut response = Response::new(Body::from(page));
-            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
-            response
-        }
+    // Load the internal error page using the tera template engine
+    let mut response = match tera.render(&internal_error_page_path, &tera::Context::new()) {
+        Ok(internal_error_page) => Response::new(Body::from(internal_error_page)),
         Err(_) => {
             let mut response = Response::new(Body::from(
                 "Internal error while loading internal error page",
