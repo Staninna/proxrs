@@ -56,6 +56,7 @@ async fn main() {
             println!("Shutting down...");
 
             // Perform any necessary cleanup here
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
             println!("Goodbye!");
             std::process::exit(0);
