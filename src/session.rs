@@ -2,7 +2,6 @@ use crate::config::{ConfigKey::*, ConfigStore};
 use chrono::{DateTime, Duration, Utc};
 use hashbrown::HashMap;
 use hyper::{Body, Request};
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -38,12 +37,6 @@ impl SessionStore {
         let mut sessions = self.sessions.lock().await;
         sessions.remove(token);
     }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct User {
-    pub username: String,
-    pub password: String,
 }
 
 #[derive(Clone, Debug)]
