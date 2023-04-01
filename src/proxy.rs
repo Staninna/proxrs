@@ -17,6 +17,8 @@ pub async fn proxy(
     let special_endpoint = conf.get(SpecialRouteEndpoint).await;
     let login_endpoint = special_endpoint.clone() + "/login";
     let logout_endpoint = special_endpoint.clone() + "/logout";
+
+    // Check if the request is a special route
     match (req.method(), req.uri().path()) {
         // Login page
         (&Method::GET, path) if path == &login_endpoint => return login_page(&conf, &tera).await,
@@ -28,8 +30,6 @@ pub async fn proxy(
 
         // Logout request
         (&Method::POST, path) if path == &logout_endpoint => return logout(req, conf, store).await,
-
-        // TODO: Session debug page /proxrs/session
 
         // Ignore all other requests
         _ => (),
