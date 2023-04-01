@@ -32,7 +32,7 @@ pub async fn login(
                 store.add(token.clone()).await;
                 token
             }
-            None => return root(Response::new(Body::from(""))),
+            None => return root(None),
         };
 
         // Create the response
@@ -51,7 +51,7 @@ pub async fn login(
             .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
 
         // Redirect to the home page
-        return root(response);
+        return root(Some(response));
     }
     // If the user is not valid, return the login page
     login_page(&conf, &tera).await
@@ -82,13 +82,12 @@ pub async fn login_page(conf: &ConfigStore, tera: &Tera) -> Result<Response<Body
 pub async fn logout(
     req: Request<Body>,
     conf: ConfigStore,
-    tera: &Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     // Check if the request has an session cookie
     let session_token = match get_session_cookie(&req, &conf).await {
         Some(session_token) => session_token,
-        None => return login_page(&conf, &tera).await,
+        None => return root(None),
     };
 
     // Remove the session from the sessions map
@@ -108,11 +107,15 @@ pub async fn logout(
         .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
 
     // Redirect to the home page
-    root(response)
+    root(Some(response))
 }
 
-// TODO: remove response argument
-fn root(mut response: Response<Body>) -> Result<Response<Body>, hyper::Error> {
+fn root(response: Option<Response<Body>>) -> Result<Response<Body>, hyper::Error> {
+    let mut response = match response {
+        Some(response) => response,
+        None => Response::new(Body::from("")),
+    };
+
     // Redirect / of the proxy to the home page
     *response.status_mut() = StatusCode::FOUND;
     response

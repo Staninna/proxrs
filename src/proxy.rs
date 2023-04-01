@@ -27,9 +27,7 @@ pub async fn proxy(
         }
 
         // Logout request
-        (&Method::POST, path) if path == &logout_endpoint => {
-            return logout(req, conf, &tera, store).await
-        }
+        (&Method::POST, path) if path == &logout_endpoint => return logout(req, conf, store).await,
 
         // TODO: Logout request /proxrs/logout
         // TODO: Session debug page /proxrs/session
