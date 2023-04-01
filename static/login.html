@@ -20,6 +20,12 @@
                 line-height: 1.4;
             }
 
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
             .container {
                 max-width: 800px;
                 margin: 0 auto;
@@ -80,6 +86,7 @@
                 border-radius: 5px;
                 font-size: 16px;
                 cursor: pointer;
+                height: 40px;
             }
 
             input[type="submit"]:hover {
@@ -89,8 +96,14 @@
     </head>
     <body>
         <div class="container">
-            <form action="{{ action }}" method="post">
-                <h1>Log in</h1>
+            <header>
+                <h1>Log in/out</h1>
+                <form action="{{ logout_endpoint }}" method="post">
+                    <input class="logout" type="submit" value="Log out" />
+                </form>
+            </header>
+
+            <form action="{{ login_endpoint }}" method="post">
                 <div class="form-group">
                     <label for="username">Enter your username:</label>
                     <input type="text" name="username" id="username" />
@@ -99,7 +112,7 @@
                     <label for="password">Enter your password:</label>
                     <input type="password" name="password" id="password" />
                 </div>
-                <input type="submit" value="Log in" />
+                <input class="login" type="submit" value="Log in" />
             </form>
         </div>
     </body>

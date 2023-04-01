@@ -59,9 +59,11 @@ pub async fn login(
 
 pub async fn login_page(conf: &ConfigStore, tera: &Tera) -> Result<Response<Body>, hyper::Error> {
     // Use tera to render the login page
-    let action = conf.get(SpecialRouteEndpoint).await + "/login";
+    let login_endpoint = conf.get(SpecialRouteEndpoint).await + "/login";
+    let logout_endpoint = conf.get(SpecialRouteEndpoint).await + "/logout";
     let mut context = Context::new();
-    context.insert("action", &action);
+    context.insert("login_endpoint", &login_endpoint);
+    context.insert("logout_endpoint", &logout_endpoint);
 
     match tera.render("login.html", &context) {
         Ok(html) => {
