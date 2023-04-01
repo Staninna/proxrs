@@ -1,6 +1,6 @@
 use crate::{
+    auth::{login, login_page, logout},
     config::{ConfigKey::*, ConfigStore},
-    login::{login, login_page},
     session::{get_session_cookie, SessionStore},
 };
 use hyper::{Body, Client, Method, Request, Response};
@@ -16,6 +16,7 @@ pub async fn proxy(
     // Check for special routes
     let special_endpoint = conf.get(SpecialRouteEndpoint).await;
     let login_endpoint = special_endpoint.clone() + "/login";
+    let logout_endpoint = special_endpoint.clone() + "/logout";
     match (req.method(), req.uri().path()) {
         // Login page
         (&Method::GET, path) if path == &login_endpoint => return login_page(&conf, &tera).await,
@@ -23,6 +24,11 @@ pub async fn proxy(
         // Login request
         (&Method::POST, path) if path == &login_endpoint => {
             return login(req, conf, &tera, store).await
+        }
+
+        // Logout request
+        (&Method::POST, path) if path == &logout_endpoint => {
+            return logout(req, conf, &tera, store).await
         }
 
         // TODO: Logout request /proxrs/logout

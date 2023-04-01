@@ -1,7 +1,7 @@
 use crate::{
     config::{ConfigKey::*, ConfigStore},
     error::internal_error,
-    session::{Session, SessionStore, User},
+    session::{get_session_cookie, Session, SessionStore, User},
 };
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
 use tera::{Context, Tera};
@@ -32,7 +32,7 @@ pub async fn login(
                 store.add(token.clone()).await;
                 token
             }
-            None => return redirect(Response::new(Body::from(""))),
+            None => return root(Response::new(Body::from(""))),
         };
 
         // Create the response
@@ -51,7 +51,7 @@ pub async fn login(
             .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
 
         // Redirect to the home page
-        return redirect(response);
+        return root(response);
     }
     // If the user is not valid, return the login page
     login_page(&conf, &tera).await
@@ -77,7 +77,40 @@ pub async fn login_page(conf: &ConfigStore, tera: &Tera) -> Result<Response<Body
     }
 }
 
-fn redirect(mut response: Response<Body>) -> Result<Response<Body>, hyper::Error> {
+pub async fn logout(
+    req: Request<Body>,
+    conf: ConfigStore,
+    tera: &Tera,
+    store: SessionStore,
+) -> Result<Response<Body>, hyper::Error> {
+    // Check if the request has an session cookie
+    let session_token = match get_session_cookie(&req, &conf).await {
+        Some(session_token) => session_token,
+        None => return login_page(&conf, &tera).await,
+    };
+
+    // Remove the session from the sessions map
+    store.remove(&session_token).await;
+
+    // Create the response
+    let mut response = Response::new(Body::from(""));
+
+    // Unset the session cookie
+    let cookie_name = conf.get(SessionCookieName).await;
+    let cookie = format!(
+        "{}=; HttpOnly; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+        cookie_name
+    );
+    response
+        .headers_mut()
+        .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
+
+    // Redirect to the home page
+    root(response)
+}
+
+// TODO: remove response argument
+fn root(mut response: Response<Body>) -> Result<Response<Body>, hyper::Error> {
     // Redirect / of the proxy to the home page
     *response.status_mut() = StatusCode::FOUND;
     response

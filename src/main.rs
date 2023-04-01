@@ -7,9 +7,9 @@ use session::SessionStore;
 use std::net::SocketAddr;
 use tera::Tera;
 use tower::make::Shared;
+mod auth;
 mod config;
 mod error;
-mod login;
 mod proxy;
 mod session;
 
