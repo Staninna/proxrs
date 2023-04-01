@@ -11,10 +11,17 @@ pub async fn proxy(
     conf: ConfigStore,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
+    // TODO: make special route configurable '/proxrs' + route
     // Check for special routes
     match (req.method(), req.uri().path()) {
+        // Login page
+        (&Method::GET, "/proxrs/login") => return login_page(&conf).await,
+
         // Login request
         (&Method::POST, "/proxrs/login") => return login(req, conf, store).await,
+
+        // TODO: Logout request /proxrs/logout
+        // TODO: Session debug page /proxrs/session
 
         // Ignore all other requests
         _ => (),
