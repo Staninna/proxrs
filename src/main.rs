@@ -1,9 +1,10 @@
+// TODO: Add tls support
+
 use config::ConfigKey::*;
 use hyper::{service::service_fn, Body, Request, Server};
 use proxy::proxy;
 use session::SessionStore;
 use std::net::SocketAddr;
-use tera::Tera;
 use tower::make::Shared;
 mod config;
 mod error;
@@ -19,24 +20,13 @@ async fn main() {
     // Initialize the sessions map
     let sessions = SessionStore::new();
 
-    // Initialize the template engine
-    let tera_path = conf.get(TeraTemplatesDir).await;
-    let tera_path = format!("{}/**/*", tera_path);
-    let tera = match Tera::new(&tera_path) {
-        Ok(t) => t,
-        Err(e) => {
-            eprintln!("Error loading Tera templates: {}", e);
-            std::process::exit(1);
-        }
-    };
-
     // Create the hyper service
     let conf_clone = conf.clone();
     let service = Shared::new(service_fn(move |req: Request<Body>| {
         let sessions = sessions.clone();
         let conf = conf_clone.clone();
 
-        proxy(req, conf, tera.clone(), sessions)
+        proxy(req, conf, sessions)
     }));
 
     // Define the server address
