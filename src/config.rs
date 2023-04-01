@@ -10,9 +10,10 @@ const PREFIX: &str = "PROXRS_";
 pub enum ConfigKey {
     Ip,
     Port,
+    DbFile,
     StaticDir,
-    SessionDuration,
     TemplateDir,
+    SessionDuration,
     InternalErrorPage,
     SessionCookieName,
     SpecialRouteEndpoint,
@@ -51,6 +52,7 @@ pub async fn config() -> ConfigStore {
     let conf = ConfigStore::new();
     conf.set("IP", Ip).await;
     conf.set("PORT", Port).await;
+    conf.set("DB_FILE", DbFile).await;
     conf.set("STATIC_DIR", StaticDir).await;
     conf.set("TEMPLATE_DIR", TemplateDir).await;
     conf.set("SESSION_DURATION", SessionDuration).await;

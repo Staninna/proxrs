@@ -24,7 +24,8 @@ async fn main() {
     let sessions = SessionStore::new();
 
     // Initialize the database connection pool
-    let db = Db::new(":memory:").await;
+    let db_file = conf.get(DbFile).await;
+    let db = Db::new(&db_file).await;
 
     // Initialize the template engine
     let template_dir = conf.get(TemplateDir).await;
