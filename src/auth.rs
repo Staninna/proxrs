@@ -75,7 +75,7 @@ pub async fn login_page(conf: ConfigStore, tera: Tera) -> Result<Response<Body>,
 
             Ok(response)
         }
-        Err(_) => return internal_error(&conf).await,
+        Err(_) => return internal_error(&tera).await,
     }
 }
 
