@@ -1,6 +1,7 @@
 // TODO: Add tls support
 
 use config::ConfigKey::*;
+use db::Db;
 use hyper::{service::service_fn, Body, Request, Server};
 use proxy::proxy;
 use session::SessionStore;
@@ -9,6 +10,7 @@ use tera::Tera;
 use tower::make::Shared;
 mod auth;
 mod config;
+mod db;
 mod error;
 mod proxy;
 mod session;
@@ -21,6 +23,9 @@ async fn main() {
     // Initialize the sessions map
     let sessions = SessionStore::new();
 
+    // Initialize the database connection pool
+    let db = Db::new(":memory:").await;
+
     // Initialize the template engine
     let template_dir = conf.get(TemplateDir).await;
     let tera = match Tera::new(&format!("{}/*.html", template_dir)) {
@@ -32,14 +37,16 @@ async fn main() {
     };
 
     // Create the hyper service
-    let conf_clone = conf.clone();
+    let db_clone = db.clone();
     let tera_clone = tera.clone();
+    let conf_clone = conf.clone();
     let service = Shared::new(service_fn(move |req: Request<Body>| {
         let sessions = sessions.clone();
         let conf = conf_clone.clone();
         let tera = tera_clone.clone();
+        let db = db_clone.clone();
 
-        proxy(req, conf, tera, sessions)
+        proxy(db, req, conf, tera, sessions)
     }));
 
     // Define the server address

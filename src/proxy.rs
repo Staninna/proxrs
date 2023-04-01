@@ -1,6 +1,7 @@
 use crate::{
     auth::{login, login_page, logout},
     config::{ConfigKey::*, ConfigStore},
+    db::Db,
     session::{get_session_cookie, SessionStore},
 };
 use hyper::{Body, Client, Method, Request, Response};
@@ -8,6 +9,7 @@ use tera::Tera;
 
 // Handles incoming requests
 pub async fn proxy(
+    db: Db,
     req: Request<Body>,
     conf: ConfigStore,
     tera: Tera,
@@ -24,7 +26,9 @@ pub async fn proxy(
         (&Method::GET, path) if path == &login_endpoint => return login_page(conf, tera).await,
 
         // Login request
-        (&Method::POST, path) if path == &login_endpoint => return login(req, conf, store).await,
+        (&Method::POST, path) if path == &login_endpoint => {
+            return login(db, req, conf, store).await
+        }
 
         // Logout request
         (&Method::POST, path) if path == &logout_endpoint => return logout(req, conf, store).await,

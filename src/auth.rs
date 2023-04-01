@@ -1,13 +1,15 @@
 use crate::{
     config::{ConfigKey::*, ConfigStore},
+    db::{Db, User},
     error::internal_error,
-    session::{get_session_cookie, Session, SessionStore, User},
+    session::{get_session_cookie, Session, SessionStore},
 };
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
 use tera::{Context, Tera};
 
 // Handles login requests
 pub async fn login(
+    db: Db,
     req: Request<Body>,
     conf: ConfigStore,
     store: SessionStore,
@@ -22,8 +24,7 @@ pub async fn login(
     };
 
     // Validate user credentials
-    // TODO: Replace this with a database lookup
-    if !user.username.is_empty() && !user.password.is_empty() {
+    if db.validate_user(&user).await {
         // Generate a session token
         let session = match Session::new(user.username, &conf, &store).await {
             Some(token) => {
