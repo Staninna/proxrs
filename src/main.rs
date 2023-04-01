@@ -6,6 +6,7 @@ use session::SessionStore;
 use std::net::SocketAddr;
 use tera::Tera;
 use tower::make::Shared;
+mod admin;
 mod auth;
 mod config;
 mod db;

@@ -12,6 +12,7 @@ pub enum ConfigKey {
     Port,
     DbFile,
     StaticDir,
+    AdminToken,
     TemplateDir,
     SessionDuration,
     InternalErrorPage,
@@ -54,6 +55,7 @@ pub async fn config() -> ConfigStore {
     conf.set("PORT", Port).await;
     conf.set("DB_FILE", DbFile).await;
     conf.set("STATIC_DIR", StaticDir).await;
+    conf.set("ADMIN_TOKEN", AdminToken).await;
     conf.set("TEMPLATE_DIR", TemplateDir).await;
     conf.set("SESSION_DURATION", SessionDuration).await;
     conf.set("SESSION_COOKIE_NAME", SessionCookieName).await;
