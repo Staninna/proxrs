@@ -1,24 +1,29 @@
 use crate::{
-    config::ConfigStore,
+    config::{ConfigKey::*, ConfigStore},
     login::{login, login_page},
     session::{get_session_cookie, SessionStore},
 };
 use hyper::{Body, Client, Method, Request, Response};
+use tera::Tera;
 
 // Handles incoming requests
 pub async fn proxy(
     req: Request<Body>,
     conf: ConfigStore,
+    tera: Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
-    // TODO: make special route configurable '/proxrs' + route
     // Check for special routes
+    let special_endpoint = conf.get(SpecialRouteEndpoint).await;
+    let login_endpoint = special_endpoint.clone() + "/login";
     match (req.method(), req.uri().path()) {
         // Login page
-        (&Method::GET, "/proxrs/login") => return login_page(&conf).await,
+        (&Method::GET, path) if path == &login_endpoint => return login_page(&conf, &tera).await,
 
         // Login request
-        (&Method::POST, "/proxrs/login") => return login(req, conf, store).await,
+        (&Method::POST, path) if path == &login_endpoint => {
+            return login(req, conf, &tera, store).await
+        }
 
         // TODO: Logout request /proxrs/logout
         // TODO: Session debug page /proxrs/session
@@ -30,7 +35,7 @@ pub async fn proxy(
     // Check if the request has an session cookie
     let session_token = match get_session_cookie(&req, &conf).await {
         Some(session_token) => session_token,
-        None => return login_page(&conf).await,
+        None => return login_page(&conf, &tera).await,
     };
 
     // Check if the session token is valid
@@ -39,10 +44,10 @@ pub async fn proxy(
             true => token,
             false => {
                 store.remove(&session_token).await;
-                return login_page(&conf).await;
+                return login_page(&conf, &tera).await;
             }
         },
-        None => return login_page(&conf).await,
+        None => return login_page(&conf, &tera).await,
     };
 
     // Renew the session token

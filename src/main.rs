@@ -5,6 +5,7 @@ use hyper::{service::service_fn, Body, Request, Server};
 use proxy::proxy;
 use session::SessionStore;
 use std::net::SocketAddr;
+use tera::Tera;
 use tower::make::Shared;
 mod config;
 mod error;
@@ -20,13 +21,25 @@ async fn main() {
     // Initialize the sessions map
     let sessions = SessionStore::new();
 
+    // Initialize the template engine
+    let template_dir = conf.get(TemplateDir).await;
+    let tera = match Tera::new(&format!("{}/*.html", template_dir)) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("Error loading templates: {}", e);
+            std::process::exit(1);
+        }
+    };
+
     // Create the hyper service
     let conf_clone = conf.clone();
+    let tera_clone = tera.clone();
     let service = Shared::new(service_fn(move |req: Request<Body>| {
         let sessions = sessions.clone();
         let conf = conf_clone.clone();
+        let tera = tera_clone.clone();
 
-        proxy(req, conf, sessions)
+        proxy(req, conf, tera, sessions)
     }));
 
     // Define the server address

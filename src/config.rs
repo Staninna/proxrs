@@ -11,10 +11,11 @@ pub enum ConfigKey {
     Ip,
     Port,
     StaticDir,
-    LoginPage,
     SessionDuration,
+    TemplateDir,
     InternalErrorPage,
     SessionCookieName,
+    SpecialRouteEndpoint,
 }
 
 #[derive(Clone)]
@@ -51,10 +52,12 @@ pub async fn config() -> ConfigStore {
     conf.set("IP", Ip).await;
     conf.set("PORT", Port).await;
     conf.set("STATIC_DIR", StaticDir).await;
-    conf.set("LOGIN_PAGE", LoginPage).await;
+    conf.set("TEMPLATE_DIR", TemplateDir).await;
     conf.set("SESSION_DURATION", SessionDuration).await;
     conf.set("SESSION_COOKIE_NAME", SessionCookieName).await;
     conf.set("INTERNAL_ERROR_PAGE", InternalErrorPage).await;
+    conf.set("SPECIAL_ROUTE_ENDPOINT", SpecialRouteEndpoint)
+        .await;
 
     conf
 }

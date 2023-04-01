@@ -4,11 +4,13 @@ use crate::{
     session::{Session, SessionStore, User},
 };
 use hyper::{header::SET_COOKIE, http::HeaderValue, Body, Request, Response, StatusCode};
+use tera::{Context, Tera};
 
 // Handles login requests
 pub async fn login(
     req: Request<Body>,
     conf: ConfigStore,
+    tera: &Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     // Extract the request body containing user credentials
@@ -17,7 +19,7 @@ pub async fn login(
     // Deserialize the request body into a User struct
     let user: User = match serde_urlencoded::from_bytes(&body_bytes) {
         Ok(user) => user,
-        Err(_) => return login_page(&conf).await,
+        Err(_) => return login_page(&conf, &tera).await,
     };
 
     // Validate user credentials
@@ -52,19 +54,19 @@ pub async fn login(
         return redirect(response);
     }
     // If the user is not valid, return the login page
-    login_page(&conf).await
+    login_page(&conf, &tera).await
 }
 
-pub async fn login_page(conf: &ConfigStore) -> Result<Response<Body>, hyper::Error> {
-    // Get the login page path from the config
-    let static_dir = conf.get(StaticDir).await;
-    let login_page_path = conf.get(LoginPage).await;
-    let login_page_path = format!("{}/{}", static_dir, login_page_path);
+pub async fn login_page(conf: &ConfigStore, tera: &Tera) -> Result<Response<Body>, hyper::Error> {
+    // Use tera to render the login page
+    let action = conf.get(SpecialRouteEndpoint).await + "/login";
+    let mut context = Context::new();
+    context.insert("action", &action);
 
-    // Load the login page using the tera template engine
-    match tokio::fs::read_to_string(login_page_path).await {
-        Ok(login_page) => {
-            let mut response = Response::new(Body::from(login_page));
+    match tera.render("login.html", &context) {
+        Ok(html) => {
+            let mut response = Response::new(Body::from(html));
+            *response.status_mut() = StatusCode::OK;
             response
                 .headers_mut()
                 .insert("Content-Type", "text/html".parse().unwrap());
