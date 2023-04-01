@@ -1,5 +1,3 @@
-// TODO: Add tls support
-
 use config::ConfigKey::*;
 use db::Db;
 use hyper::{service::service_fn, Body, Request, Server};
