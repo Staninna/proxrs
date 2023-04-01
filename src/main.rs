@@ -1,4 +1,5 @@
 // TODO: Add tls support
+// TODO: Remove all references (&) and check where they are needed
 
 use config::ConfigKey::*;
 use hyper::{service::service_fn, Body, Request, Server};
