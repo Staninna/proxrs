@@ -10,7 +10,6 @@ use tera::{Context, Tera};
 pub async fn login(
     req: Request<Body>,
     conf: ConfigStore,
-    tera: &Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
     // Extract the request body containing user credentials
@@ -19,7 +18,7 @@ pub async fn login(
     // Deserialize the request body into a User struct
     let user: User = match serde_urlencoded::from_bytes(&body_bytes) {
         Ok(user) => user,
-        Err(_) => return login_page(&conf, &tera).await,
+        Err(_) => return root(None),
     };
 
     // Validate user credentials
@@ -53,11 +52,11 @@ pub async fn login(
         // Redirect to the home page
         return root(Some(response));
     }
-    // If the user is not valid, return the login page
-    login_page(&conf, &tera).await
+    // Invalid credentials
+    return root(None);
 }
 
-pub async fn login_page(conf: &ConfigStore, tera: &Tera) -> Result<Response<Body>, hyper::Error> {
+pub async fn login_page(conf: ConfigStore, tera: Tera) -> Result<Response<Body>, hyper::Error> {
     // Use tera to render the login page
     let login_endpoint = conf.get(SpecialRouteEndpoint).await + "/login";
     let logout_endpoint = conf.get(SpecialRouteEndpoint).await + "/logout";

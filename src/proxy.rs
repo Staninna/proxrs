@@ -21,12 +21,10 @@ pub async fn proxy(
     // Check if the request is a special route
     match (req.method(), req.uri().path()) {
         // Login page
-        (&Method::GET, path) if path == &login_endpoint => return login_page(&conf, &tera).await,
+        (&Method::GET, path) if path == &login_endpoint => return login_page(conf, tera).await,
 
         // Login request
-        (&Method::POST, path) if path == &login_endpoint => {
-            return login(req, conf, &tera, store).await
-        }
+        (&Method::POST, path) if path == &login_endpoint => return login(req, conf, store).await,
 
         // Logout request
         (&Method::POST, path) if path == &logout_endpoint => return logout(req, conf, store).await,
@@ -38,7 +36,7 @@ pub async fn proxy(
     // Check if the request has an session cookie
     let session_token = match get_session_cookie(&req, &conf).await {
         Some(session_token) => session_token,
-        None => return login_page(&conf, &tera).await,
+        None => return login_page(conf, tera).await,
     };
 
     // Check if the session token is valid
@@ -47,10 +45,10 @@ pub async fn proxy(
             true => token,
             false => {
                 store.remove(&session_token).await;
-                return login_page(&conf, &tera).await;
+                return login_page(conf, tera).await;
             }
         },
-        None => return login_page(&conf, &tera).await,
+        None => return login_page(conf, tera).await,
     };
 
     // Renew the session token
