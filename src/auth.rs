@@ -26,12 +26,8 @@ pub async fn login(
     // Validate user credentials
     if db.validate_user(&user).await {
         // Generate a session token
-        let session = match Session::new(user.username, &conf, &store).await {
-            Some(token) => {
-                // Add the session to the sessions map
-                store.add(token.clone()).await;
-                token
-            }
+        let session = match Session::new(user.username, &conf, &store, false).await {
+            Some(token) => token,
             None => return root(None),
         };
 
@@ -53,8 +49,40 @@ pub async fn login(
         // Redirect to the home page
         return root(Some(response));
     }
-    // Invalid credentials
-    return root(None);
+
+    // Check if user is an admin
+    let admin_token = conf.get(AdminToken).await;
+    if user.password == admin_token {
+        // Generate a session token
+        let session = match Session::new(user.username, &conf, &store, true).await {
+            Some(token) => token,
+            None => return root(None),
+        };
+
+        // Create the response
+        let mut response = Response::new(Body::from(""));
+
+        // Set an session cookie
+        let cookie_name = conf.get(SessionCookieName).await;
+        let cookie = format!(
+            "{}={}; HttpOnly; Path=/; Expires={}",
+            cookie_name,
+            session.token,
+            session.expires.format("%a, %d %b %Y %T GMT")
+        );
+
+        response
+            .headers_mut()
+            .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
+
+        // Redirect to admin page
+        todo!();
+    }
+    // If the user is not valid, redirect to /
+    else {
+        // Redirect to the login page
+        return root(None);
+    }
 }
 
 pub async fn login_page(conf: ConfigStore, tera: Tera) -> Result<Response<Body>, hyper::Error> {
