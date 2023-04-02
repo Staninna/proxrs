@@ -4,14 +4,14 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
 #[derive(Clone)]
-pub struct DataBase {
+pub struct Db {
     conn: Arc<Mutex<Connection>>,
 }
 
-impl DataBase {
+impl Db {
     pub async fn new(file: String) -> Result<Self, SQLiteError> {
         // Create the database
-        let db = DataBase {
+        let db = Db {
             conn: Arc::new(Mutex::new(Connection::open(file).unwrap())),
         };
 
