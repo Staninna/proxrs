@@ -12,15 +12,15 @@ use std::net::SocketAddr;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // Initialize the config
-    let conf = check!(init::conf());
+    let conf = err!(init::conf());
 
     // Initialize the database
-    let db_file = check!(conf.get(DbFile));
-    let _db = check!(Db::new(db_file).await);
+    let db_file = err!(conf.get(DbFile));
+    let _db = err!(Db::new(db_file).await);
 
     // Define the server address
-    let ip = check!(check!(conf.get(Ip)).parse::<std::net::IpAddr>());
-    let port = check!(check!(conf.get(Port)).parse::<u16>());
+    let ip = err!(err!(conf.get(Ip)).parse::<std::net::IpAddr>());
+    let port = err!(err!(conf.get(Port)).parse::<u16>());
     let _addr = SocketAddr::new(ip, port);
 
     // Evrything went well

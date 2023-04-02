@@ -15,7 +15,7 @@ pub enum Error {
 // Macro to check for errors and print them
 // TODO: Remove line/file/charecter when stable
 #[macro_export]
-macro_rules! check {
+macro_rules! err {
     ($e:expr) => {
         $e.unwrap_or_else(|err| {
             // Get line/file/charecter
