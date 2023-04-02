@@ -18,7 +18,7 @@ pub async fn login(
     let body_bytes = hyper::body::to_bytes(req.into_body()).await?;
 
     // Deserialize the request body into a User struct
-    let user: User = match serde_urlencoded::from_bytes(&body_bytes) {
+    let mut user: User = match serde_urlencoded::from_bytes(&body_bytes) {
         Ok(user) => user,
         Err(_) => return root(None),
     };
@@ -53,6 +53,8 @@ pub async fn login(
     // Check if user is an admin
     let admin_token = conf.get(AdminToken).await;
     if user.password == admin_token {
+        user.username = format!("{} (admin)", user.username);
+
         // Generate a session token
         let session = match Session::new(user.username, &conf, &store, true).await {
             Some(token) => token,
