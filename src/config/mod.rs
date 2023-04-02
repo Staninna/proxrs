@@ -2,5 +2,5 @@ const PREFIX: &str = "PROXRS_";
 
 mod error;
 pub mod init;
-mod options;
+pub mod options;
 mod store;
