@@ -1,4 +1,4 @@
-use super::{error::ConfigError, options::ConfigOptions};
+use super::{options::ConfigOptions, Error};
 use hashbrown::HashMap;
 
 #[derive(Clone, Debug)]
@@ -13,10 +13,10 @@ impl Config {
         }
     }
 
-    pub fn get(&self, key: ConfigOptions) -> Result<String, ConfigError> {
+    pub fn get(&self, key: ConfigOptions) -> Result<String, Error> {
         match self.store.get(&key) {
             Some(value) => Ok(value.to_string()),
-            None => Err(ConfigError::MissingEnvVar(key.to_string())),
+            None => Err(Error::MissingConfigVar(key.to_string())),
         }
     }
 

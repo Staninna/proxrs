@@ -1,3 +1,5 @@
+use error::Error;
+
 const PREFIX: &str = "PROXRS_";
 
 pub mod error;

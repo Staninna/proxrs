@@ -11,11 +11,11 @@ use crate::{
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // Initialize the config
-    let conf = init::conf()?;
+    let conf = check!(init::conf());
 
     // Initialize the database
-    let db_file = conf.get(DbFile)?;
-    let db = Db::new(db_file).await?;
+    let db_file = check!(conf.get(DbFile));
+    let db = check!(Db::new(db_file).await);
 
     println!("{:?}", conf);
 

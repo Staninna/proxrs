@@ -1,4 +1,4 @@
-use super::error::SQLiteError;
+use super::Error;
 use rusqlite::{params, Connection};
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
@@ -9,7 +9,7 @@ pub struct Db {
 }
 
 impl Db {
-    pub async fn new(file: String) -> Result<Self, SQLiteError> {
+    pub async fn new(file: String) -> Result<Self, Error> {
         // Create the database
         let db = Db {
             conn: Arc::new(Mutex::new(Connection::open(file).unwrap())),
@@ -22,7 +22,7 @@ impl Db {
         Ok(db)
     }
 
-    async fn init(&self) -> Result<(), SQLiteError> {
+    async fn init(&self) -> Result<(), Error> {
         // Get a connection from the pool
         let conn = self.conn().await;
 
