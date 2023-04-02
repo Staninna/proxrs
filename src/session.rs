@@ -41,13 +41,19 @@ impl SessionStore {
 
 #[derive(Clone, Debug)]
 pub struct Session {
+    pub admin: bool,
     pub user: String,
     pub token: String,
     pub expires: DateTime<Utc>,
 }
 
 impl Session {
-    pub async fn new(user: String, conf: &ConfigStore, store: &SessionStore) -> Option<Self> {
+    pub async fn new(
+        user: String,
+        conf: &ConfigStore,
+        store: &SessionStore,
+        admin: bool,
+    ) -> Option<Self> {
         // Check if user is already logged in
         if let Some(session) = store.get_user(&user).await {
             if session.is_valid() {
@@ -57,15 +63,23 @@ impl Session {
 
         // Generate a new session token
         let token = Uuid::new_v4().to_string();
-        let session_duratian = conf.get(SessionDuration).await.parse::<i64>().unwrap();
-        let expires = Utc::now() + Duration::seconds(session_duratian);
+        let session_duration = match admin {
+            true => conf.get(AdminSessionDuration).await.parse::<i64>().unwrap(),
+            false => conf.get(SessionDuration).await.parse::<i64>().unwrap(),
+        };
+        let expires = Utc::now() + Duration::seconds(session_duration);
 
-        // Return the new session
-        Some(Session {
+        // Add the session to the session store
+        let session = Session {
             user,
+            admin,
             token,
             expires,
-        })
+        };
+        store.add(session.clone()).await;
+
+        // Return the session
+        Some(session)
     }
 
     pub async fn renew(&mut self, conf: &ConfigStore) {
@@ -73,12 +87,19 @@ impl Session {
             return;
         }
 
-        let session_duratian = conf.get(SessionDuration).await.parse::<i64>().unwrap();
+        let session_duratian = match self.admin {
+            true => conf.get(AdminSessionDuration).await.parse::<i64>().unwrap(),
+            false => conf.get(SessionDuration).await.parse::<i64>().unwrap(),
+        };
         self.expires = Utc::now() + Duration::seconds(session_duratian);
     }
 
     pub fn is_valid(&self) -> bool {
         self.expires > Utc::now()
+    }
+
+    pub fn is_admin(&self) -> bool {
+        self.admin
     }
 }
 
