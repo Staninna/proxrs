@@ -37,12 +37,6 @@ impl Db {
             [],
         )?;
 
-        // Add the default user (admin:admin) (TEMPORARY) TODO: Remove this
-        self.conn.lock().await.execute(
-            "INSERT OR IGNORE INTO users (username, password) VALUES ('admin', 'admin')",
-            [],
-        )?;
-
         // Everything went fine
         Ok(())
     }
