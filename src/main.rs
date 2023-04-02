@@ -1,25 +1,23 @@
 mod config;
 mod db;
+mod error;
 
 use crate::{
     config::{init, options::ConfigOptions::*},
     db::db::Db,
+    error::Error,
 };
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     // Initialize the config
-    let conf = match init::conf() {
-        Ok(conf) => conf,
-        Err(err) => panic!("{:?}", err),
-    };
+    let conf = init::conf()?;
 
     // Initialize the database
-    let db_file = conf.get(DbFile).unwrap();
-    let db = match Db::new(db_file).await {
-        Ok(db) => db,
-        Err(err) => panic!("{:?}", err),
-    };
+    let db_file = conf.get(DbFile)?;
+    let db = Db::new(db_file).await?;
 
     println!("{:?}", conf);
+
+    Ok(())
 }

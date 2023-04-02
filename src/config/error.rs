@@ -6,7 +6,7 @@ pub enum ConfigError {
     MissingEnvVar(String),
 
     #[error("Failed to load `.env` file")]
-    DotEnvError,
+    DotEnvError(#[from] dotenv::Error),
 
     #[error("Failed to load environment variable: {0}")]
     EnvVarError(String),

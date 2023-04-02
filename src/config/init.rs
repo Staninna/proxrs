@@ -4,7 +4,10 @@ use strum::IntoEnumIterator;
 
 pub fn conf() -> Result<Config, ConfigError> {
     // Load the .env file
-    dotenv().map_err(|_| ConfigError::DotEnvError)?;
+    match dotenv() {
+        Ok(_) => (),
+        Err(err) => return Err(ConfigError::DotEnvError(err)),
+    }
 
     // Iterate over all config options
     let mut conf = Config::new();
