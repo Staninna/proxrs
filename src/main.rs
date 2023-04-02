@@ -2,11 +2,9 @@ mod config;
 mod db;
 mod error;
 
-use crate::{
-    config::{init, options::ConfigOptions::*},
-    db::db::Db,
-    error::Error,
-};
+use config::{init, options::ConfigOptions::*};
+use db::db::Db;
+use error::Error;
 use hyper::{Body, Request, Response, Server};
 use std::net::SocketAddr;
 use tower::{make::Shared, service_fn};
