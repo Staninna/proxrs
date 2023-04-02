@@ -1,4 +1,4 @@
-use super::options::ConfigOptions;
+use super::{error::ConfigError, options::ConfigOptions};
 use hashbrown::HashMap;
 
 #[derive(Clone, Debug)]
@@ -13,8 +13,11 @@ impl Config {
         }
     }
 
-    pub fn get(&self, key: ConfigOptions) -> Option<&String> {
-        self.store.get(&key)
+    pub fn get(&self, key: ConfigOptions) -> Result<String, ConfigError> {
+        match self.store.get(&key) {
+            Some(value) => Ok(value.to_string()),
+            None => Err(ConfigError::MissingEnvVar(key.to_string())),
+        }
     }
 
     pub(super) fn set(&mut self, key: ConfigOptions, value: String) {
