@@ -59,4 +59,21 @@ impl Db {
             Err(_) => false,
         }
     }
+
+    pub async fn get_users(&self) -> Vec<User> {
+        let conn = self.conn.lock().await;
+        let mut stmt = conn.prepare("SELECT * FROM users").unwrap();
+
+        let rows = stmt.query_map([], |row| {
+            Ok(User {
+                username: row.get(1)?,
+                password: row.get(2)?,
+            })
+        });
+
+        match rows {
+            Ok(rows) => rows.map(|r| r.unwrap()).collect(),
+            Err(_) => vec![],
+        }
+    }
 }
