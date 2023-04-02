@@ -3,11 +3,11 @@ mod db;
 mod error;
 
 use config::{init, options::ConfigOptions::*};
-use db::db::Db;
+use db::Db;
 use error::Error;
-use hyper::{Body, Request, Response, Server};
+// use hyper::{Body, Request, Response, Server};
 use std::net::SocketAddr;
-use tower::{make::Shared, service_fn};
+// use tower::{make::Shared, service_fn};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -16,12 +16,12 @@ async fn main() -> Result<(), Error> {
 
     // Initialize the database
     let db_file = check!(conf.get(DbFile));
-    let db = check!(Db::new(db_file).await);
+    let _db = check!(Db::new(db_file).await);
 
     // Define the server address
     let ip = check!(check!(conf.get(Ip)).parse::<std::net::IpAddr>());
     let port = check!(check!(conf.get(Port)).parse::<u16>());
-    let addr = SocketAddr::new(ip, port);
+    let _addr = SocketAddr::new(ip, port);
 
     // Evrything went well
     Ok(())

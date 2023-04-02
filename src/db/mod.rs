@@ -1,4 +1,5 @@
+pub use database::Db;
 use error::Error;
 
-pub mod db;
+mod database;
 pub mod error;

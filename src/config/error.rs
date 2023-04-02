@@ -3,7 +3,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Failed to load `.env` file: {0}")]
-    DotEnvError(#[from] dotenv::Error),
+    DotEnvFailed(#[from] dotenv::Error),
 
     #[error("Missing environment variable: {0}")]
     MissingEnvVar(String),
