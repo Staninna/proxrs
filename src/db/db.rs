@@ -37,6 +37,18 @@ impl Db {
             params![],
         )?;
 
+        // Create the proxy table
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS proxy (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name        VARCHAR(255) NOT NULL,
+                    host        VARCHAR(255) NOT NULL,
+                    port        INTEGER NOT NULL,
+                    is_enabled  INTEGER NOT NULL DEFAULT 1
+                );",
+            params![],
+        )?;
+
         // Everything went well
         Ok(())
     }
