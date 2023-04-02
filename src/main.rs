@@ -7,6 +7,9 @@ use crate::{
     db::db::Db,
     error::Error,
 };
+use hyper::{Body, Request, Response, Server};
+use std::net::SocketAddr;
+use tower::{make::Shared, service_fn};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -17,7 +20,11 @@ async fn main() -> Result<(), Error> {
     let db_file = check!(conf.get(DbFile));
     let db = check!(Db::new(db_file).await);
 
-    println!("{:?}", conf);
+    // Define the server address
+    let ip = check!(check!(conf.get(Ip)).parse::<std::net::IpAddr>());
+    let port = check!(check!(conf.get(Port)).parse::<u16>());
+    let addr = SocketAddr::new(ip, port);
 
+    // Evrything went well
     Ok(())
 }
