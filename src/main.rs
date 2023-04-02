@@ -2,8 +2,8 @@ mod config;
 mod db;
 mod error;
 
-use config::{init, options::ConfigOptions::*};
-use db::Db;
+use config::*;
+use db::*;
 use error::Error;
 // use hyper::{Body, Request, Response, Server};
 use std::net::SocketAddr;

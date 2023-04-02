@@ -1,12 +1,12 @@
-use super::{options::ConfigOptions, Error};
+use super::*;
 use hashbrown::HashMap;
 
 #[derive(Clone, Debug)]
-pub struct Config {
+pub struct ConfigStore {
     store: HashMap<ConfigOptions, String>,
 }
 
-impl Config {
+impl ConfigStore {
     pub fn new() -> Self {
         Self {
             store: HashMap::new(),

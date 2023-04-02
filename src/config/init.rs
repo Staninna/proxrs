@@ -1,13 +1,13 @@
-use super::{options::ConfigOptions, store::Config, Error, PREFIX};
+use crate::config::*;
 use dotenv::{dotenv, var};
 use strum::IntoEnumIterator;
 
-pub fn conf() -> Result<Config, Error> {
+pub fn conf() -> Result<ConfigStore, Error> {
     // Load the .env file
     dotenv()?;
 
     // Iterate over all config options
-    let mut conf = Config::new();
+    let mut conf = ConfigStore::new();
     for key in ConfigOptions::iter() {
         // Get the environment variable
         let value = var(PREFIX.to_owned() + &key.to_string())
