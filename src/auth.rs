@@ -77,8 +77,14 @@ pub async fn login(
             .headers_mut()
             .insert(SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
 
-        // Redirect to admin page
-        todo!();
+        // Redirect to /admin
+        let admin_endpoint = conf.get(SpecialRouteEndpoint).await + "/admin";
+        *response.status_mut() = StatusCode::FOUND;
+        response
+            .headers_mut()
+            .insert("Location", admin_endpoint.parse().unwrap());
+
+        return Ok(response);
     }
     // If the user is not valid, redirect to /
     else {
@@ -140,7 +146,7 @@ pub async fn logout(
     root(Some(response))
 }
 
-fn root(response: Option<Response<Body>>) -> Result<Response<Body>, hyper::Error> {
+pub fn root(response: Option<Response<Body>>) -> Result<Response<Body>, hyper::Error> {
     let mut response = match response {
         Some(response) => response,
         None => Response::new(Body::from("")),

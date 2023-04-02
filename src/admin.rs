@@ -1,52 +1,49 @@
 use crate::{
+    auth::root,
     config::{ConfigKey::*, ConfigStore},
     db::Db,
     error::internal_error,
-    session::SessionStore,
+    session::{get_session_cookie, SessionStore},
 };
-use hyper::{Body, Request, Response, StatusCode};
-use tera::{Context, Tera};
+use hyper::{Body, Request, Response};
+use tera::Tera;
 
-pub async fn admin_page(conf: ConfigStore, tera: Tera) -> Result<Response<Body>, hyper::Error> {
-    // Use tera to render the admin page
-    let admin_endpoint = conf.get(SpecialRouteEndpoint).await + "/admin";
-    let mut context = Context::new();
-    context.insert("admin_endpoint", &admin_endpoint);
-
-    match tera.render("admin.html", &context) {
-        Ok(html) => {
-            let mut response = Response::new(Body::from(html));
-            *response.status_mut() = StatusCode::OK;
-            response
-                .headers_mut()
-                .insert("Content-Type", "text/html".parse().unwrap());
-
-            Ok(response)
-        }
-        Err(_) => return internal_error(&tera).await,
-    }
-}
-
-pub async fn admin(
-    req: Request<Body>,
-    conf: ConfigStore,
-    tera: Tera,
-    store: SessionStore,
-) -> Result<Response<Body>, hyper::Error> {
-    // TODO: use separate admin token for admin stuff with shorter expiration time proxrs-x-admin
-    // Check if request contains the admin token and if so render the admin page
-    // Otherwise redirect to the admin login page
-    todo!()
-}
-
-pub async fn add_user(
+pub async fn admin_page(
     db: Db,
     req: Request<Body>,
     conf: ConfigStore,
     tera: Tera,
     store: SessionStore,
 ) -> Result<Response<Body>, hyper::Error> {
-    // TODO: use separate admin token for admin stuff with shorter expiration time proxrs-x-admin
-    // Check if user is admin and if so add a new user to the database
-    todo!()
+    let session_token = match get_session_cookie(&req, &conf).await {
+        Some(token) => token,
+        None => return root(None),
+    };
+
+    let mut token = match store.get_token(&session_token).await {
+        Some(token) => match token.is_valid() {
+            true => token,
+            false => {
+                store.remove(&session_token).await;
+                return root(None);
+            }
+        },
+        None => return root(None),
+    };
+
+    // Renew the session token
+    token.renew(&conf).await;
+
+    // Render the admin page
+    let add_user_endpoint = conf.get(SpecialRouteEndpoint).await + "/add_user";
+    let remove_user_endpoint = conf.get(SpecialRouteEndpoint).await + "/remove_user";
+    let users = db.get_users().await;
+    let mut context = tera::Context::new();
+    context.insert("add_user_endpoint", &add_user_endpoint);
+    context.insert("remove_user_endpoint", &remove_user_endpoint);
+    context.insert("users", &users);
+    match tera.render("admin.html", &context) {
+        Ok(body) => Ok(Response::new(Body::from(body))),
+        Err(_) => internal_error(&tera).await,
+    }
 }

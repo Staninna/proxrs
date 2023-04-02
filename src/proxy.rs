@@ -1,4 +1,5 @@
 use crate::{
+    admin::admin_page,
     auth::{login, login_page, logout},
     config::{ConfigKey::*, ConfigStore},
     db::Db,
@@ -19,6 +20,7 @@ pub async fn proxy(
     let special_endpoint = conf.get(SpecialRouteEndpoint).await;
     let login_endpoint = special_endpoint.clone() + "/login";
     let logout_endpoint = special_endpoint.clone() + "/logout";
+    let admin_endpoint = special_endpoint.clone() + "/admin";
 
     // Check if the request is a special route
     match (req.method(), req.uri().path()) {
@@ -33,6 +35,11 @@ pub async fn proxy(
         // Logout request
         (&Method::POST, path) if path == &logout_endpoint => return logout(req, conf, store).await,
 
+        // Admin page
+        (&Method::GET, path) if path == &admin_endpoint => {
+            return admin_page(db, req, conf, tera, store).await
+        }
+
         // Ignore all other requests
         _ => (),
     }
@@ -45,7 +52,7 @@ pub async fn proxy(
 
     // Check if the session token is valid
     let mut token = match store.get_token(&session_token).await {
-        Some(token) => match token.is_valid() {
+        Some(token) => match token.is_valid() && !token.is_admin() {
             true => token,
             false => {
                 store.remove(&session_token).await;
