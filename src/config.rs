@@ -18,6 +18,7 @@ pub enum ConfigKey {
     InternalErrorPage,
     SessionCookieName,
     SpecialRouteEndpoint,
+    AdminSessionDuration,
 }
 
 #[derive(Clone)]
@@ -60,6 +61,8 @@ pub async fn config() -> ConfigStore {
     conf.set("SESSION_DURATION", SessionDuration).await;
     conf.set("SESSION_COOKIE_NAME", SessionCookieName).await;
     conf.set("INTERNAL_ERROR_PAGE", InternalErrorPage).await;
+    conf.set("ADMIN_SESSION_DURATION", AdminSessionDuration)
+        .await;
     conf.set("SPECIAL_ROUTE_ENDPOINT", SpecialRouteEndpoint)
         .await;
 
