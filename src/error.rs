@@ -10,6 +10,10 @@ pub enum Error {
     // Database error
     #[error("Database error: {0}")]
     Database(#[from] crate::db::error::Error),
+
+    // Hyper error
+    #[error("Hyper error: {0}")]
+    Hyper(#[from] hyper::Error),
 }
 
 /// A macro to check for errors and print them. If an expression evaluates to an error,
