@@ -6,14 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rusqlite = { version = "0.29", features = ["bundled"] }
-hyper = { version = "0.14", features = ["full"] }       # remove full
-tokio = { version = "1.0", features = ["full"] }        # remove full
-tower = { version = "0.4", features = ["full"] }        # remove full
+# Tokio stack
+hyper = { version = "0.14", features = ["full"] } # remove full
+tokio = { version = "1.0", features = ["full"] }  # remove full
+tower = { version = "0.4", features = ["full"] }  # remove full
 
+# Other dependencies
+rusqlite = { version = "0.29", features = ["bundled"] }
+strum_macros = "0.24"
 hashbrown = "0.13"
 thiserror = "1.0"
 dotenv = "0.15"
-
-strum_macros = "0.24"
 strum = "0.24"
