@@ -6,5 +6,4 @@
 
 ## Todo
 
-- [ ] Use `axum` for the project cause it seems easier to use than raw `hyper` and `tower`.
-  - Example: <https://github.com/ddprrt/axum-tower-layer-services/>
+- [ ] Read the [Tower.rs tutorials](https://github.com/tower-rs/tower/tree/master/guides)
