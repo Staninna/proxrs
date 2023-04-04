@@ -12,7 +12,7 @@ impl Db {
     pub async fn new(file: String) -> Result<Self, Error> {
         // Create the database
         let db = Db {
-            conn: Arc::new(Mutex::new(Connection::open(file).unwrap())),
+            conn: Arc::new(Mutex::new(Connection::open(file)?)),
         };
 
         // Initialize the database
