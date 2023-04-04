@@ -1,4 +1,5 @@
 use super::*;
+use crate::error::Error;
 use hashbrown::HashMap;
 
 #[derive(Clone, Debug)]

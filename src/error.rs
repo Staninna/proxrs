@@ -3,16 +3,28 @@ use thiserror::Error;
 // Global error type (inherits from all other errors)
 #[derive(Error, Debug)]
 pub enum Error {
-    // Config error
-    #[error("Config error: {0}")]
-    Config(#[from] crate::config::error::Error),
+    // Missing config variable
+    #[error("Missing config variable: {0}")]
+    MissingConfigVar(String),
+
+    // Missing environment variable
+    #[error("Missing environment variable: {0}")]
+    MissingEnvVar(String),
+
+    // Empty environment variable
+    #[error("Empty environment variable: {0}")]
+    EmptyEnvVar(String),
+
+    // Dotenv error
+    #[error("Dotenv: {0}")]
+    Dotenv(#[from] dotenv::Error),
 
     // Database error
-    #[error("Database error: {0}")]
-    Database(#[from] crate::db::error::Error),
+    #[error("Database: {0}")]
+    Database(#[from] rusqlite::Error),
 
     // Hyper error
-    #[error("Hyper error: {0}")]
+    #[error("Hyper: {0}")]
     Hyper(#[from] hyper::Error),
 }
 

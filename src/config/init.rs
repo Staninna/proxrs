@@ -1,4 +1,4 @@
-use crate::config::*;
+use crate::{config::*, error::Error};
 use dotenv::{dotenv, var};
 use strum::IntoEnumIterator;
 

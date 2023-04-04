@@ -1,9 +1,9 @@
 mod config;
-mod db;
+mod database;
 mod error;
 
 use config::*;
-use db::*;
+use database::*;
 use error::Error;
 use hyper::{service::service_fn, Body, Request, Response, Server};
 use std::net::SocketAddr;
