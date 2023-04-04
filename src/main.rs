@@ -5,11 +5,9 @@ mod error;
 use config::*;
 use db::*;
 use error::Error;
-use hyper::{Body, Request, Response, Server};
-use tower::{make::Shared, service_fn};
-// use hyper::{Body, Request, Response, Server};
+use hyper::{service::service_fn, Body, Request, Response, Server};
 use std::net::SocketAddr;
-// use tower::{make::Shared, service_fn};
+use tower::make::Shared;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -32,7 +30,9 @@ async fn main() -> Result<(), Error> {
     let server = Server::bind(&addr)
         .serve(service)
         .with_graceful_shutdown(async {
-            tokio::signal::ctrl_c().await.unwrap();
+            tokio::signal::ctrl_c()
+                .await
+                .expect("failed to install CTRL+C signal handler");
             println!("Shutting down...");
 
             // Any cleanup code here
