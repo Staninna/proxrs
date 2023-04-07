@@ -1,13 +1,13 @@
 mod config;
 mod database;
 mod error;
+mod proxy;
 
 use config::*;
 use database::*;
 use error::Error;
-use hyper::{service::service_fn, Body, Request, Response, Server};
+use hyper::{service::make_service_fn, Server};
 use std::net::SocketAddr;
-use tower::make::Shared;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -24,7 +24,11 @@ async fn main() -> Result<(), Error> {
     let addr = SocketAddr::new(ip, port);
 
     // Create a hyper service
-    let service = Shared::new(service_fn(move |_req: Request<Body>| handle()));
+    let service = make_service_fn(|_conn| async {
+        let svc = proxy::Proxy;
+
+        Ok::<_, hyper::Error>(svc)
+    });
 
     // Create the server with graceful shutdown capabilities
     let server = Server::bind(&addr)
@@ -48,8 +52,4 @@ async fn main() -> Result<(), Error> {
     }
 
     unreachable!();
-}
-
-async fn handle() -> Result<Response<Body>, Error> {
-    Ok(Response::new(Body::from("Hello, World!")))
 }
