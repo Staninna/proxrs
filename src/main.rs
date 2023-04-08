@@ -3,11 +3,9 @@ mod database;
 mod error;
 mod services;
 
-use config::*;
-use database::*;
-use error::Error;
+use crate::{config::*, database::*, error::*, services::*};
+
 use hyper::{service::make_service_fn, Server};
-use services::*;
 use std::net::SocketAddr;
 
 #[tokio::main]
