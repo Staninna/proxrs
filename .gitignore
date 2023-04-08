@@ -1,3 +1,6 @@
 /target
 .env
 proxrs.db
+
+# An tool to test the proxy
+hey.exe
