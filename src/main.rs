@@ -1,12 +1,13 @@
 mod config;
 mod database;
 mod error;
-mod proxy;
+mod services;
 
 use config::*;
 use database::*;
 use error::Error;
 use hyper::{service::make_service_fn, Server};
+use services::*;
 use std::net::SocketAddr;
 
 #[tokio::main]
@@ -25,7 +26,7 @@ async fn main() -> Result<(), Error> {
 
     // Create a hyper service
     let service = make_service_fn(|_conn| async {
-        let svc = proxy::Proxy;
+        let svc = Proxy;
 
         Ok::<_, hyper::Error>(svc)
     });
