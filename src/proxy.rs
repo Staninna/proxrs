@@ -1,18 +1,15 @@
-// Import the necessary libraries and modules
 use futures::future::BoxFuture;
 use hyper::{Body, Client, Request, Response};
 use hyper_tls::HttpsConnector;
 use std::task::{Context, Poll};
 use tower::Service;
 
-// Define a struct to serve as the HTTP service
 #[derive(Clone, Copy)]
 pub struct Proxy;
 
-// Implement the Service trait for the HelloWorld struct
 impl Service<Request<Body>> for Proxy {
     type Response = Response<Body>;
-    type Error = hyper::Error;
+    type Error = crate::error::Error;
     type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
     fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
@@ -41,28 +38,21 @@ impl Service<Request<Body>> for Proxy {
 
         // Create a new client
         let https = HttpsConnector::new();
-        let res = Client::builder()
-            .build::<_, hyper::Body>(https)
-            .request(new_req);
+        let client = Client::builder().build::<_, hyper::Body>(https);
 
+        // Do the request
         Box::pin(async move {
-            // Await the response
-            let res = res.await;
-
-            // Print the response
-            let res = match res {
-                Ok(res) => {
-                    dbg!(&res); // DEBUG: Print the response
-                    res
-                }
-                Err(err) => {
-                    dbg!(&err); // DEBUG: Print the error
-                    return Err(err);
-                }
-            };
+            // Do the request
+            let res = client.request(new_req).await;
 
             // Return the response
-            Ok(res)
+            match res {
+                Ok(res) => Ok(res),
+                Err(err) => {
+                    eprintln!("Error: {}", err);
+                    Err(err.into())
+                }
+            }
         })
     }
 }
