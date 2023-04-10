@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Log in</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            body {
+                background-color: #333;
+                color: #f1f1f1;
+                font-family: "Nunito", sans-serif;
+                font-size: 16px;
+                line-height: 1.4;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #1f1f1f;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                border-radius: 5px;
+            }
+
+            h1 {
+                font-size: 32px;
+                margin-bottom: 20px;
+                color: #f1f1f1;
+            }
+
+            p {
+                margin-bottom: 20px;
+            }
+
+            button {
+                padding: 10px 20px;
+                background-color: #f1f1f1;
+                color: #333;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background-color: #ddd;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+                font-size: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            input[type="text"],
+            input[type="password"] {
+                margin-top: 10px;
+                padding: 10px 20px;
+                background-color: #f1f1f1;
+                color: #333;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+            input[type="submit"] {
+                padding: 10px 20px;
+                background-color: #f1f1f1;
+                color: #333;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                height: 40px;
+            }
+
+            input[type="submit"]:hover {
+                background-color: #ddd;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Log in</h1>
+                <form action="{{ logout_endpoint }}" method="post">
+                    <input class="logout" type="submit" value="Log out" />
+                </form>
+            </header>
+
+            <form action="{{ login_endpoint }}" method="post">
+                <div class="form-group">
+                    <label for="username">Enter your username:</label>
+                    <input type="text" name="username" id="username" />
+                </div>
+                <div class="form-group">
+                    <label for="password">Enter your password:</label>
+                    <input type="password" name="password" id="password" />
+                </div>
+                <input class="login" type="submit" value="Log in" />
+            </form>
+        </div>
+    </body>
+</html>

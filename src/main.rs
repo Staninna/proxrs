@@ -5,12 +5,19 @@ mod routes;
 
 use crate::{conf::*, database::*, error::*, routes::*};
 
-use axum::{Router, Server};
+use axum::{routing::get, Router, Server};
 use hyper::{client::HttpConnector, Body};
 use hyper_tls::HttpsConnector;
 use std::net::SocketAddr;
 
 type Client = hyper::Client<HttpsConnector<HttpConnector>, Body>;
+
+#[derive(Clone)]
+pub struct AppState {
+    client: Client,
+    conf: Config,
+    db: Db,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -29,12 +36,18 @@ async fn main() -> Result<(), Error> {
     let port = err!(err!(conf.get(Port)).parse::<u16>());
     let addr = SocketAddr::new(ip, port);
 
+    // Get special routes
+    let special_route = err!(conf.get(SpecialRoute));
+    let login_route = special_route + "/login";
+
     // Create the app
     let app = Router::new()
+        // Add the special routes
+        .route(&login_route, get(login))
+        // Add proxy route
         .fallback(proxy)
-        .with_state(client)
-        .with_state(conf)
-        .with_state(db);
+        // Add the app state
+        .with_state(AppState { client, conf, db });
 
     // Start the server
     let server = Server::bind(&addr)

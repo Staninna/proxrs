@@ -1,9 +1,9 @@
-use crate::Client;
+use crate::AppState;
 
 use axum::{extract::State, response::Response};
 use hyper::{Body, Request, Uri};
 
-pub async fn proxy(State(client): State<Client>, mut req: Request<Body>) -> Response<Body> {
+pub async fn proxy(State(app_state): State<AppState>, mut req: Request<Body>) -> Response<Body> {
     let path = req.uri().path();
     let path_query = req
         .uri()
@@ -24,7 +24,7 @@ pub async fn proxy(State(client): State<Client>, mut req: Request<Body>) -> Resp
     *req.uri_mut() = uri.parse::<Uri>().unwrap();
 
     // Do the request
-    let res = client.request(req).await;
+    let res = app_state.client.request(req).await;
 
     // Return the response
     match res {
