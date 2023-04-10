@@ -3,11 +3,11 @@ use crate::error::Error;
 use hashbrown::HashMap;
 
 #[derive(Clone, Debug)]
-pub struct ConfigStore {
+pub struct Config {
     store: HashMap<ConfigOptions, String>,
 }
 
-impl ConfigStore {
+impl Config {
     pub fn new() -> Self {
         Self {
             store: HashMap::new(),

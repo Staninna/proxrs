@@ -1,4 +1,4 @@
-pub use config_store::ConfigStore;
+pub use config_store::Config;
 pub use options::ConfigOptions::{self, *};
 
 const PREFIX: &str = "PROXRS_";
