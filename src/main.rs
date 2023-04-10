@@ -1,9 +1,9 @@
-mod config;
+mod conf;
 mod database;
 mod error;
 mod routes;
 
-use crate::{config::*, database::*, error::*, routes::*};
+use crate::{conf::*, database::*, error::*, routes::*};
 
 use axum::{Router, Server};
 use hyper::{client::HttpConnector, Body};

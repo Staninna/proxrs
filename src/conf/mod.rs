@@ -1,8 +1,8 @@
-pub use config_store::Config;
+pub use config::Config;
 pub use options::ConfigOptions::{self, *};
 
 const PREFIX: &str = "PROXRS_";
 
-mod config_store;
+mod config;
 pub mod init;
 pub mod options;
