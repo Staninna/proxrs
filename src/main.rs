@@ -5,8 +5,11 @@ mod services;
 
 use crate::{config::*, database::*, error::*, services::*};
 
-use hyper::{service::make_service_fn, Server};
+use axum::{Router, Server};
+use hyper::{client::HttpConnector, Body};
 use std::net::SocketAddr;
+
+type Client = hyper::Client<HttpConnector, Body>;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -15,23 +18,26 @@ async fn main() -> Result<(), Error> {
 
     // Initialize the database
     let db_file = err!(conf.get(DbFile));
-    let _db = err!(Db::new(db_file).await);
+    let db = err!(Db::new(db_file).await);
+
+    // Create the client
+    let client = Client::new();
 
     // Define the server address
     let ip = err!(err!(conf.get(Ip)).parse::<std::net::IpAddr>());
     let port = err!(err!(conf.get(Port)).parse::<u16>());
     let addr = SocketAddr::new(ip, port);
 
-    // Create a hyper service
-    let service = make_service_fn(|_conn| async {
-        let svc = Proxy;
+    // Create the app
+    let app = Router::new()
+        .fallback(proxy)
+        .with_state(client)
+        .with_state(conf)
+        .with_state(db);
 
-        Ok::<_, hyper::Error>(svc)
-    });
-
-    // Create the server with graceful shutdown capabilities
+    // Start the server
     let server = Server::bind(&addr)
-        .serve(service)
+        .serve(app.into_make_service())
         .with_graceful_shutdown(async {
             tokio::signal::ctrl_c()
                 .await
@@ -47,8 +53,8 @@ async fn main() -> Result<(), Error> {
     // Run the server
     println!("Listening on http://{}", addr);
     if let Err(e) = server.await {
-        eprintln!("Server error: {}", e);
+        eprintln!("server error: {}", e);
     }
 
-    unreachable!();
+    unreachable!()
 }
