@@ -11,9 +11,30 @@ pub async fn proxy(State(client): State<Client>, mut req: Request<Body>) -> Resp
         .map(|v| v.as_str())
         .unwrap_or(path);
 
-    let uri = format!("http://witted.nl{}", path_query);
+    // Create uri
+    let uri = format!("https://example.com{}", path_query);
 
-    *req.uri_mut() = Uri::try_from(uri).unwrap();
+    // Make the Host header match the new uri
+    // IDK: if this is necessary when using this for local network requests but it is for the requests to external websites
+    let host = uri.replace("https://", "").replace("http://", "");
+    let host = host.split('/').next().unwrap();
+    req.headers_mut().insert("Host", host.parse().unwrap());
 
-    client.request(req).await.unwrap()
+    // Set the new uri
+    *req.uri_mut() = uri.parse::<Uri>().unwrap();
+
+    // Do the request
+    let res = client.request(req).await;
+
+    // Return the response
+    match res {
+        Ok(res) => res,
+        Err(err) => {
+            eprintln!("Error: {}", err);
+            Response::builder()
+                .status(500)
+                .body(Body::from("Internal Server Error"))
+                .unwrap()
+        }
+    }
 }
