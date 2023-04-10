@@ -7,9 +7,10 @@ use crate::{config::*, database::*, error::*, services::*};
 
 use axum::{Router, Server};
 use hyper::{client::HttpConnector, Body};
+use hyper_tls::HttpsConnector;
 use std::net::SocketAddr;
 
-type Client = hyper::Client<HttpConnector, Body>;
+type Client = hyper::Client<HttpsConnector<HttpConnector>, Body>;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -21,7 +22,7 @@ async fn main() -> Result<(), Error> {
     let db = err!(Db::new(db_file).await);
 
     // Create the client
-    let client = Client::new();
+    let client = hyper::Client::builder().build(HttpsConnector::new());
 
     // Define the server address
     let ip = err!(err!(conf.get(Ip)).parse::<std::net::IpAddr>());
