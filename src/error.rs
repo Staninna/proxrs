@@ -22,10 +22,6 @@ pub enum Error {
     // Database error
     #[error("Database: {0}")]
     Database(#[from] rusqlite::Error),
-
-    // Hyper error
-    #[error("Hyper: {0}")]
-    Hyper(#[from] hyper::Error),
 }
 
 /// A macro to check for errors and print them. If an expression evaluates to an error,
