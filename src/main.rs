@@ -2,8 +2,9 @@ mod conf;
 mod database;
 mod error;
 mod routes;
+mod sess;
 
-use crate::{conf::*, database::*, error::*, routes::*};
+use crate::{conf::*, database::*, error::*, routes::*, sess::*};
 
 use axum::{
     routing::{get, post},
@@ -17,6 +18,7 @@ type Client = hyper::Client<HttpsConnector<HttpConnector>, Body>;
 
 #[derive(Clone)]
 pub struct AppState {
+    sessions: Sessions,
     client: Client,
     conf: Config,
     db: Db,
@@ -30,6 +32,9 @@ async fn main() -> Result<(), Error> {
     // Initialize the database
     let db_file = check_err!(conf.get(DbFile));
     let db = check_err!(Db::new(db_file).await);
+
+    // Initialize the sessions
+    let sessions = Sessions::new();
 
     // Create the client
     let client = hyper::Client::builder().build(HttpsConnector::new());
@@ -53,7 +58,12 @@ async fn main() -> Result<(), Error> {
         // Add proxy route
         .fallback(proxy)
         // Add the app state
-        .with_state(AppState { client, conf, db });
+        .with_state(AppState {
+            sessions,
+            client,
+            conf,
+            db,
+        });
 
     // Start the server
     let server = Server::bind(&addr)
