@@ -1,5 +1,5 @@
-pub use login::{login_page, login_req};
+pub use auth::{login_page, login_req};
 pub use proxy::proxy;
 
-pub mod login;
+pub mod auth;
 pub mod proxy;
