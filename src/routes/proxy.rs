@@ -4,6 +4,8 @@ use axum::{extract::State, response::Response};
 use hyper::{Body, Request, StatusCode, Uri};
 
 pub async fn proxy(State(app_state): State<AppState>, mut req: Request<Body>) -> Response<Body> {
+    // TODO: Do auth check here
+
     let path = req.uri().path();
     let path_query = req
         .uri()
