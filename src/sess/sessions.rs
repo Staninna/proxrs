@@ -22,7 +22,7 @@ impl Sessions {
 
     pub async fn new_session(&mut self, user: String) -> Option<Session> {
         // Check if the user already has a session
-        if let Some(session) = self.get_session_by_user(&user).await {
+        if let Some(_) = self.get_session_by_user(&user).await {
             return None;
         }
 
