@@ -1,7 +1,7 @@
 use crate::{check_err, conf::*, AppState};
 
 use axum::{extract::State, response::Response};
-use hyper::{Body, Request, StatusCode};
+use hyper::{header::SET_COOKIE, Body, Request, StatusCode};
 use serde::Deserialize;
 
 // Send the login page to the user
@@ -76,8 +76,7 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     };
 
     // Get the username and password
-    let username = login_data.username;
-    let password = login_data.password;
+    let (username, password) = (login_data.username, login_data.password);
 
     // Check if the username and password are correct // TODO: Add database support
     if username.is_empty() || password.is_empty() {
@@ -85,20 +84,31 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
         return redirect_to_login(&special_route, "Username or password is empty");
     }
 
-    // TODO: Tokens and cookies
+    // Check if the user is already logged in
+    match app_state.sessions.get_session_by_user(&username) {
+        Some(_) => {
+            todo!("Redirect to root");
+        }
+        None => (),
+    }
 
-    // TODO: Redirect to root
-    redirect(State(app_state), "Logged in")
+    // Create a new session
+    let session = app_state.to_owned().sessions.new_session(username);
+
+    // Get cookie name
+    let cookie_name = check_err!(app_state.conf.get(CookieName));
+
+    // Set the session cookie
+    let res = Response::builder()
+        .status(StatusCode::FOUND)
+        .header(SET_COOKIE, format!("{}={}", cookie_name, session.token))
+        .header("Location", "/")
+        .body(Body::empty())
+        .unwrap();
+
+    // Send the response
+    res
 }
-
-// Redirect to the login page with a message
-fn redirect(State(app_state): State<AppState>, msg: &str) -> Response<Body> {
-    // Get special route
-    let special_route = check_err!(app_state.conf.get(SpecialRoute));
-    let login_route = special_route.to_owned() + "/login";
-
-    // Add message to the query
-    let login_route = format!("{}?msg={}", login_route, msg);
 
 // Redirect the user to the login page
 fn redirect_to_login(special_route: &str, msg: &str) -> Response<Body> {
