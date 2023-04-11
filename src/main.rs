@@ -22,22 +22,22 @@ pub struct AppState {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // Initialize the config
-    let conf = err!(init::conf());
+    let conf = check_err!(init::conf());
 
     // Initialize the database
-    let db_file = err!(conf.get(DbFile));
-    let db = err!(Db::new(db_file).await);
+    let db_file = check_err!(conf.get(DbFile));
+    let db = check_err!(Db::new(db_file).await);
 
     // Create the client
     let client = hyper::Client::builder().build(HttpsConnector::new());
 
     // Define the server address
-    let ip = err!(err!(conf.get(Ip)).parse::<std::net::IpAddr>());
-    let port = err!(err!(conf.get(Port)).parse::<u16>());
+    let ip = check_err!(check_err!(conf.get(Ip)).parse::<std::net::IpAddr>());
+    let port = check_err!(check_err!(conf.get(Port)).parse::<u16>());
     let addr = SocketAddr::new(ip, port);
 
     // Get special routes
-    let special_route = err!(conf.get(SpecialRoute));
+    let special_route = check_err!(conf.get(SpecialRoute));
     let login_route = special_route + "/login";
 
     // Create the app
