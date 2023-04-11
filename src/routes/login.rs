@@ -87,7 +87,8 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     // Check if the user is already logged in
     match app_state.sessions.get_session_by_user(&username) {
         Some(_) => {
-            todo!("Redirect to root");
+            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+            return redirect_to_login(&special_route, "You are already logged in");
         }
         None => (),
     }
@@ -98,16 +99,13 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     // Get cookie name
     let cookie_name = check_err!(app_state.conf.get(CookieName));
 
-    // Set the session cookie
-    let res = Response::builder()
+    // Send the response with the session token
+    Response::builder()
         .status(StatusCode::FOUND)
         .header(SET_COOKIE, format!("{}={}", cookie_name, session.token))
         .header("Location", "/")
         .body(Body::empty())
-        .unwrap();
-
-    // Send the response
-    res
+        .unwrap()
 }
 
 // Redirect the user to the login page
