@@ -48,6 +48,7 @@ async fn main() -> Result<(), Error> {
     let special_route = check_err!(conf.get(SpecialRoute));
     let login_route = special_route.to_owned() + "/login";
     let logout_route = special_route.to_owned() + "/logout";
+    let admin_route = special_route.to_owned() + "/admin";
 
     // Create the app
     let app = Router::new()
@@ -55,6 +56,8 @@ async fn main() -> Result<(), Error> {
         .route(&login_route, get(login_page))
         .route(&login_route, post(login_req))
         .route(&logout_route, post(|| async { "logout" })) // TODO: Implement logout post
+        .route(&admin_route, get(|| async { "admin" })) // TODO: Implement admin get
+        .route(&admin_route, post(|| async { "admin" })) // TODO: Implement admin post
         // Add proxy route
         .fallback(proxy)
         // Add the app state
