@@ -117,11 +117,16 @@
             <form action="{{login_route}}" method="post">
                 <div class="form-group">
                     <label for="username">Enter your username:</label>
-                    <input type="text" name="username" id="username" />
+                    <input type="text" name="username" id="username" required />
                 </div>
                 <div class="form-group">
                     <label for="password">Enter your password:</label>
-                    <input type="password" name="password" id="password" />
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        required
+                    />
                 </div>
                 <input class="login" type="submit" value="Log in" />
             </form>
