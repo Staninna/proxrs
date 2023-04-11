@@ -85,7 +85,7 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     }
 
     // Check if the user is already logged in
-    match app_state.sessions.get_session_by_user(&username) {
+    match app_state.sessions.get_session_by_user(&username).await {
         Some(_) => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
             return redirect_to_login(&special_route, "You are already logged in");
@@ -94,7 +94,7 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     }
 
     // Create a new session
-    let session = app_state.to_owned().sessions.new_session(username);
+    let session = app_state.to_owned().sessions.new_session(username).await;
 
     // Get cookie name
     let cookie_name = check_err!(app_state.conf.get(CookieName));
