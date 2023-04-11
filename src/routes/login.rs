@@ -28,7 +28,7 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
         // Msg is empty
         true => "".to_string(),
 
-        // Decode the msg
+        // Decode the msg // TODO: Make that the alert can have different colors based on the msg
         false => {
             let msg = urlencoding::decode(&msg).unwrap_or(std::borrow::Cow::Borrowed(""));
             format!(
