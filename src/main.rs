@@ -48,7 +48,7 @@ async fn main() -> Result<(), Error> {
     let app = Router::new()
         // Add the special routes
         .route(&login_route, get(login_page))
-        .route(&login_route, post(|| async { "login" })) // TODO: Implement login post
+        .route(&login_route, post(login_req))
         .route(&logout_route, post(|| async { "logout" })) // TODO: Implement logout post
         // Add proxy route
         .fallback(proxy)

@@ -1,4 +1,4 @@
-pub use login::login_page;
+pub use login::{login_page, login_req};
 pub use proxy::proxy;
 
 pub mod login;
