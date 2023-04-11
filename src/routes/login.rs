@@ -64,14 +64,20 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
         Ok(body) => body,
         Err(_) => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
-            return redirect_to_login(&special_route, "An error occurred"); // TODO: Better error message
+            return redirect_to_login(
+                &special_route,
+                "Oops! Something went wrong. Please give it another try.",
+            );
         }
     };
     let login_data = match serde_urlencoded::from_bytes::<LoginData>(&body) {
         Ok(data) => data,
         Err(_) => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
-            return redirect_to_login(&special_route, "An error occurred"); // TODO: Better error message
+            return redirect_to_login(
+                &special_route,
+                "Oops! We couldn't process the information you provided. Can you please try again?",
+            );
         }
     };
 
@@ -81,14 +87,20 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     // Check if the username and password are correct // TODO: Add database support
     if username.is_empty() || password.is_empty() {
         let special_route = check_err!(app_state.conf.get(SpecialRoute));
-        return redirect_to_login(&special_route, "Username or password is empty");
+        return redirect_to_login(
+            &special_route,
+            "Sorry, either your username or password is incorrect. Please double-check and try again."
+        );
     }
 
     // Check if the user is already logged in
     match app_state.sessions.get_session_by_user(&username).await {
         Some(_) => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
-            return redirect_to_login(&special_route, "You are already logged in");
+            return redirect_to_login(
+                &special_route,
+                "You are already logged in. No need to log in again.",
+            );
         }
         None => (),
     }
