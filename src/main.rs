@@ -5,7 +5,10 @@ mod routes;
 
 use crate::{conf::*, database::*, error::*, routes::*};
 
-use axum::{routing::get, Router, Server};
+use axum::{
+    routing::{get, post},
+    Router, Server,
+};
 use hyper::{client::HttpConnector, Body};
 use hyper_tls::HttpsConnector;
 use std::net::SocketAddr;
@@ -38,12 +41,15 @@ async fn main() -> Result<(), Error> {
 
     // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
-    let login_route = special_route + "/login";
+    let login_route = special_route.to_owned() + "/login";
+    let logout_route = special_route.to_owned() + "/logout";
 
     // Create the app
     let app = Router::new()
         // Add the special routes
         .route(&login_route, get(login))
+        .route(&login_route, post(|| async { "login" })) // TODO: Implement login post
+        .route(&logout_route, post(|| async { "logout" })) // TODO: Implement logout post
         // Add proxy route
         .fallback(proxy)
         // Add the app state
