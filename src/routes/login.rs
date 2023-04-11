@@ -33,10 +33,10 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
             let msg = urlencoding::decode(&msg).unwrap_or(std::borrow::Cow::Borrowed(""));
             format!(
                 r#"
-<div class="alert">
-    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-    <p>{}</p>
-</div>"#,
+                <div class="alert">
+                    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                    <p>{}</p>
+                </div>"#,
                 msg
             )
         }
