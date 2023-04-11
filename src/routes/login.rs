@@ -93,20 +93,20 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
         );
     }
 
-    // Check if the user is already logged in
-    match app_state.sessions.get_session_by_user(&username).await {
-        Some(_) => {
+    // Create a new session
+    let session = match app_state.to_owned().sessions.new_session(username).await {
+        // No session was found of the user
+        Some(session) => session,
+
+        // Session was found of the user
+        None => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
             return redirect_to_login(
                 &special_route,
                 "You are already logged in. No need to log in again.",
             );
         }
-        None => (),
-    }
-
-    // Create a new session
-    let session = app_state.to_owned().sessions.new_session(username).await;
+    };
 
     // Get cookie name
     let cookie_name = check_err!(app_state.conf.get(CookieName));
