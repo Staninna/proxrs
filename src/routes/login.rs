@@ -10,7 +10,16 @@ pub async fn login(State(app_state): State<AppState>, _req: Request<Body>) -> Re
     let login_page = static_dir + "/login.html";
 
     // Read the login page
-    let login_page = err!(tokio::fs::read_to_string(login_page).await);
+    let mut login_page = err!(tokio::fs::read_to_string(login_page).await);
+
+    // Get special routes
+    let special_route = err!(app_state.conf.get(SpecialRoute));
+    let login_route = special_route.to_owned() + "/login";
+    let logout_route = special_route.to_owned() + "/logout";
+
+    // Replace the special routes in the login page
+    login_page = login_page.replace("{{login_route}}", &login_route);
+    login_page = login_page.replace("{{logout_route}}", &logout_route);
 
     // Send the login page
     Response::builder()
