@@ -4,6 +4,7 @@ use strum_macros::EnumIter;
 #[derive(Hash, Eq, PartialEq, Debug, Clone, EnumIter)]
 pub enum ConfigOptions {
     SpecialRoute,
+    CookieName,
     StaticDir,
     DbFile,
     Port,
@@ -15,6 +16,7 @@ impl ToString for ConfigOptions {
     fn to_string(&self) -> String {
         match self {
             ConfigOptions::SpecialRoute => "SPECIAL_ROUTE".to_string(),
+            ConfigOptions::CookieName => "COOKIE_NAME".to_string(),
             ConfigOptions::StaticDir => "STATIC_DIR".to_string(),
             ConfigOptions::DbFile => "DB_FILE".to_string(),
             ConfigOptions::Port => "PORT".to_string(),
