@@ -62,11 +62,17 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     // Get data from the request using serde
     let body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(body) => body,
-        Err(_) => return redirect(State(app_state), "Invalid request"), // TODO: Better error
+        Err(_) => {
+            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+            return redirect_to_login(&special_route, "An error occurred"); // TODO: Better error message
+        }
     };
     let login_data = match serde_urlencoded::from_bytes::<LoginData>(&body) {
         Ok(data) => data,
-        Err(_) => return redirect(State(app_state), "Invalid request"), // TODO: Better error
+        Err(_) => {
+            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+            return redirect_to_login(&special_route, "An error occurred"); // TODO: Better error message
+        }
     };
 
     // Get the username and password
@@ -75,7 +81,8 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
 
     // Check if the username and password are correct // TODO: Add database support
     if username.is_empty() || password.is_empty() {
-        return redirect(State(app_state), "Incorrect username or password");
+        let special_route = check_err!(app_state.conf.get(SpecialRoute));
+        return redirect_to_login(&special_route, "Username or password is empty");
     }
 
     // TODO: Tokens and cookies
@@ -93,10 +100,18 @@ fn redirect(State(app_state): State<AppState>, msg: &str) -> Response<Body> {
     // Add message to the query
     let login_route = format!("{}?msg={}", login_route, msg);
 
-    // Redirect to the login page
+// Redirect the user to the login page
+fn redirect_to_login(special_route: &str, msg: &str) -> Response<Body> {
     Response::builder()
         .status(StatusCode::FOUND)
-        .header("Location", login_route)
+        .header(
+            "Location",
+            format!(
+                "{}?msg={}",
+                special_route.to_owned() + "/login",
+                urlencoding::encode(msg)
+            ),
+        )
         .body(Body::empty())
         .unwrap()
 }
