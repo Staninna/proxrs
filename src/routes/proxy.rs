@@ -1,7 +1,7 @@
 use crate::AppState;
 
 use axum::{extract::State, response::Response};
-use hyper::{Body, Request, Uri};
+use hyper::{Body, Request, StatusCode, Uri};
 
 pub async fn proxy(State(app_state): State<AppState>, mut req: Request<Body>) -> Response<Body> {
     let path = req.uri().path();
@@ -32,7 +32,7 @@ pub async fn proxy(State(app_state): State<AppState>, mut req: Request<Body>) ->
         Err(err) => {
             eprintln!("Error: {}", err);
             Response::builder()
-                .status(500)
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .body(Body::from("Internal Server Error"))
                 .unwrap()
         }
