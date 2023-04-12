@@ -138,14 +138,14 @@
                 document.querySelector(".alert").style.display = "none";
             }
 
-            // // Clear url query string
-            // if (window.history.replaceState) {
-            //     window.history.replaceState(
-            //         null,
-            //         null,
-            //         window.location.href.split("?")[0]
-            //     );
-            // }
+            // Clear url query string
+            if (window.history.replaceState) {
+                window.history.replaceState(
+                    null,
+                    null,
+                    window.location.href.split("?")[0]
+                );
+            }
         </script>
     </head>
     <body>
