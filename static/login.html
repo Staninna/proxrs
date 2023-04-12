@@ -123,7 +123,9 @@
                 border-radius: 5px;
                 border: 1px solid;
                 width: 40px;
+                min-width: 40px;
                 height: 40px;
+                min-height: 40px;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -136,14 +138,14 @@
                 document.querySelector(".alert").style.display = "none";
             }
 
-            // Clear url query string
-            if (window.history.replaceState) {
-                window.history.replaceState(
-                    null,
-                    null,
-                    window.location.href.split("?")[0]
-                );
-            }
+            // // Clear url query string
+            // if (window.history.replaceState) {
+            //     window.history.replaceState(
+            //         null,
+            //         null,
+            //         window.location.href.split("?")[0]
+            //     );
+            // }
         </script>
     </head>
     <body>
