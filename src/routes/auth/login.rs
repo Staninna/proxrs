@@ -1,17 +1,19 @@
 use crate::{check_err, conf::*, AppState};
 
-use axum::{
-    extract::State,
-    response::{Redirect, Response},
-};
+use axum::{extract::State, response::Redirect};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
-use hyper::{Body, Request, StatusCode};
+use hyper::{Body, Request, Response, StatusCode};
 use serde::Deserialize;
 use urlencoding::{decode, encode};
 
 // Send the login page to the user
-pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -> Response<Body> {
+pub async fn login_page(
+    State(app_state): State<AppState>,
+    jar: CookieJar,
+    req: Request<Body>,
+) -> Response<Body> {
     let conf = app_state.conf;
+    let sessions = app_state.sessions;
 
     let special_route = check_err!(conf.get(SpecialRoute));
 
@@ -31,8 +33,38 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
     login_page = login_page.replace("{{login_route}}", &login_route);
     login_page = login_page.replace("{{logout_route}}", &logout_route);
 
+    // Get username from cookie
+    let cookie_name = check_err!(conf.get(CookieName));
+    let username = if let Some(cookie) = jar.get(&cookie_name).cloned() {
+        // Get the session token
+        let session_token = cookie.value();
+
+        // Get user from the session token
+        let user = sessions.get_user_by_token(session_token).await;
+
+        // Check if the session token is valid
+        if sessions.validate_session_by_token(session_token).await {
+            Some(user)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    // Get the title
+    let title = match username {
+        // User is logged in
+        Some(username) => format!("Welcome, {}!", username),
+
+        // User is not logged in
+        None => "Log in".to_string(),
+    };
+
+    // Replace the title in the login page
+    login_page = login_page.replace("{{title}}", &title);
+
     // Get msg from the query
-    // TODO: Check if user already logged in if yes say hello
     let msg = req.uri().query().unwrap_or("").replace("msg=", "");
     let msg = match msg.is_empty() {
         // Msg is empty
