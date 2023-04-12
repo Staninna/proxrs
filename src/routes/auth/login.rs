@@ -7,6 +7,7 @@ use axum::{
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use hyper::{Body, Request, StatusCode};
 use serde::Deserialize;
+use urlencoding::{decode, encode};
 
 // Send the login page to the user
 pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -> Response<Body> {
@@ -37,7 +38,7 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
 
         // Decode the msg // TODO: Make that the alert can have different colors based on the msg
         false => {
-            let msg = urlencoding::decode(&msg).unwrap_or(std::borrow::Cow::Borrowed(""));
+            let msg = decode(&msg).unwrap_or(std::borrow::Cow::Borrowed(""));
             format!(
                 r#"
                 <div class="alert">
@@ -81,7 +82,7 @@ pub async fn login_req(
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
-                urlencoding::encode("Oops! Something went wrong. Please give it another try.")
+                encode("Oops! Something went wrong. Please give it another try.")
             )));
         }
     };
@@ -92,7 +93,7 @@ pub async fn login_req(
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
-                urlencoding::encode("Oops! We couldn't process the information you provided. Can you please try again?")
+                encode("Oops! We couldn't process the information you provided. Can you please try again?")
             )));
         }
     };
@@ -106,7 +107,7 @@ pub async fn login_req(
         return Err(Redirect::to(&format!(
             "{}/login?msg={}",
             &special_route,
-            urlencoding::encode("Sorry, either your username or password is incorrect. Please double-check and try again.")
+            encode("Sorry, either your username or password is incorrect. Please double-check and try again.")
         )));
     }
 
@@ -127,7 +128,7 @@ pub async fn login_req(
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
-                urlencoding::encode(&format!(
+                encode(&format!(
                     "{} you are already logged in. No need to log in again.",
                     user
                 ))
