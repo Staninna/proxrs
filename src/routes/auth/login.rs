@@ -27,6 +27,7 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
     login_page = login_page.replace("{{logout_route}}", &logout_route);
 
     // Get msg from the query
+    // TODO: Check if user already logged in if yes say hello
     let msg = req.uri().query().unwrap_or("").replace("msg=", "");
     let msg = match msg.is_empty() {
         // Msg is empty
