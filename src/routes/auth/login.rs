@@ -41,7 +41,7 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
         // Decode the msg
         // TODO: Make that the alert can have different colors based on the msg
         false => {
-            let msg = decode(&msg).unwrap_or(std::borrow::Cow::Borrowed(""));
+            let msg = decode(&msg).unwrap();
             format!(
                 r#"
                 <div class="alert">
