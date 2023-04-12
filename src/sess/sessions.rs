@@ -47,4 +47,15 @@ impl Sessions {
         // If no session was found, return None
         None
     }
+
+    pub async fn validate_session_by_token(&self, token: &str) -> bool {
+        // Check if the session exists
+        if let Some(_) = self.lock().await.get(token) {
+            // If the session exists, return true
+            return true;
+        }
+
+        // If the session doesn't exist, return false
+        false
+    }
 }

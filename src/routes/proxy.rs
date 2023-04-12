@@ -1,11 +1,43 @@
-use crate::AppState;
+use crate::*;
 
-use axum::{extract::State, response::Response};
+use axum::{
+    extract::State,
+    response::{Redirect, Response},
+};
+use axum_extra::extract::CookieJar;
 use hyper::{Body, Request, StatusCode, Uri};
 
-pub async fn proxy(State(app_state): State<AppState>, mut req: Request<Body>) -> Response<Body> {
-    // TODO: Do auth check here
+pub async fn proxy(
+    State(app_state): State<AppState>,
+    jar: CookieJar,
+    mut req: Request<Body>,
+) -> Result<Response<Body>, Redirect> {
+    // Get cookie
+    let cookie_name = check_err!(app_state.conf.get(CookieName));
+    let cookie = match jar.get(&cookie_name) {
+        Some(cookie) => cookie,
+        None => {
+            // Redirect to login page
+            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+            return Err(Redirect::to(&format!("{}/login", special_route)));
+        }
+    };
 
+    // Validate cookie
+    match app_state
+        .sessions
+        .validate_session_by_token(cookie.value())
+        .await
+    {
+        true => (),
+        false => {
+            // Redirect to login page
+            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+            return Err(Redirect::to(&format!("{}/login", special_route)));
+        }
+    }
+
+    // Get the path
     let path = req.uri().path();
     let path_query = req
         .uri()
@@ -30,13 +62,10 @@ pub async fn proxy(State(app_state): State<AppState>, mut req: Request<Body>) ->
 
     // Return the response
     match res {
-        Ok(res) => res,
-        Err(err) => {
-            eprintln!("Error: {}", err);
-            Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(Body::from("Internal Server Error"))
-                .unwrap()
-        }
+        Ok(res) => Ok(res),
+        Err(err) => Ok(Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Body::from(format!("Error: {}", err)))
+            .unwrap()),
     }
 }
