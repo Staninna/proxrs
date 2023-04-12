@@ -13,6 +13,8 @@ use urlencoding::{decode, encode};
 pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -> Response<Body> {
     let conf = app_state.conf;
 
+    let special_route = check_err!(conf.get(SpecialRoute));
+
     // Get the login page
     let static_dir = check_err!(conf.get(StaticDir));
     let login_page = static_dir + "/login.html";
@@ -21,7 +23,7 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
     let mut login_page = check_err!(tokio::fs::read_to_string(login_page).await);
 
     // Get special routes
-    let special_route = check_err!(conf.get(SpecialRoute));
+
     let login_route = special_route.to_owned() + "/login";
     let logout_route = special_route.to_owned() + "/logout";
 
@@ -74,11 +76,12 @@ pub async fn login_req(
     let mut sessions = app_state.sessions;
     let conf = app_state.conf;
 
+    let special_route = check_err!(conf.get(SpecialRoute));
+
     // Get data from the request using serde
     let body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(body) => body,
         Err(_) => {
-            let special_route = check_err!(conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
@@ -89,7 +92,6 @@ pub async fn login_req(
     let login_data = match serde_urlencoded::from_bytes::<LoginData>(&body) {
         Ok(data) => data,
         Err(_) => {
-            let special_route = check_err!(conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
@@ -103,7 +105,6 @@ pub async fn login_req(
 
     // Check if the username and password are correct // TODO: Add database support
     if username.is_empty() || password.is_empty() {
-        let special_route = check_err!(conf.get(SpecialRoute));
         return Err(Redirect::to(&format!(
             "{}/login?msg={}",
             &special_route,
@@ -124,7 +125,6 @@ pub async fn login_req(
 
         // Check if the session token is valid
         if sessions.validate_session_by_token(session_token).await && user == username {
-            let special_route = check_err!(conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
@@ -138,7 +138,6 @@ pub async fn login_req(
             sessions.delete_session_by_token(session_token).await;
 
             // Redirect the user login page
-            let special_route = check_err!(conf.get(SpecialRoute));
             return Ok((
                 jar,
                 Redirect::to(&format!(
