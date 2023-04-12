@@ -1,3 +1,5 @@
+use crate::*;
+
 use super::*;
 use hashbrown::HashMap;
 use std::sync::Arc;
@@ -20,25 +22,49 @@ impl Sessions {
         self.store.lock().await
     }
 
-    pub async fn new_session(&mut self, user: String) -> Session {
+    pub async fn new_session(&mut self, user: String, conf: &Config) -> Session {
+        // get expire time from config
+        let expire_time = check_err!(conf.get(SessionExpireTime))
+            .parse::<i64>()
+            .unwrap();
+
         // Create a new session
         let token = Uuid::new_v4().to_string();
-        let session = Session::new(user, token.clone());
+        let session = Session::new(user, token.clone(), expire_time);
         self.lock().await.insert(token, session.clone());
 
         // Return the session
         session
     }
 
-    pub async fn validate_session_by_token(&self, token: &str) -> bool {
+    pub async fn validate_session_by_token(&self, token: &str, conf: &Config) -> bool {
         // Check if the session exists
-        if let Some(_) = self.lock().await.get(token) {
-            // If the session exists, return true
-            return true;
-        }
+        let mut locked = self.lock().await;
 
-        // If the session doesn't exist, return false
-        false
+        println!("locked");
+
+        let session = if let Some(session) = locked.get(token) {
+            session
+        } else {
+            return false;
+        };
+
+        println!("session");
+
+        if session.is_not_expired() {
+            // Get the expire time from the config
+            let expire_time = check_err!(conf.get(SessionExpireTime))
+                .parse::<i64>()
+                .unwrap();
+
+            // If the session is not expired, renew it
+            locked.get_mut(token).unwrap().renew(expire_time);
+            true
+        } else {
+            // If the session is expired, delete it
+            locked.remove(token);
+            false
+        }
     }
 
     pub async fn get_user_by_token(&self, token: &str) -> String {
