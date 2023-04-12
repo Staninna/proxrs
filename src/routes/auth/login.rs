@@ -190,7 +190,14 @@ pub async fn login_req(
     // TODO: set expiration time
 
     // Redirect the user to the home page
-    Ok((jar.add(cookie), Redirect::to("/")))
+    Ok((
+        jar.add(cookie),
+        Redirect::to(&format!(
+            "{}/login?msg={}&status=success",
+            &special_route,
+            encode("You have successfully logged in.")
+        )),
+    ))
 }
 
 fn get_query_param(req: &Request<Body>, param: &str) -> Option<String> {
