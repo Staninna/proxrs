@@ -94,24 +94,34 @@
             }
 
             .alert {
-                background-color: #f44336;
                 display: flex;
                 gap: 10px;
                 align-items: center;
-                color: white;
+                color: black;
                 padding: 10px 20px;
                 margin-bottom: 20px;
                 border-radius: 5px;
-                font-size: 16px;
+                font-size: 18px;
+            }
+
+            .alert.success {
+                background-color: #4caf50;
+            }
+
+            .alert.warning {
+                background-color: #ff9800;
+            }
+
+            .alert.error {
+                background-color: #f44336;
             }
 
             .closebtn {
-                color: white;
                 font-size: 22px;
                 font-weight: bold;
                 cursor: pointer;
                 border-radius: 5px;
-                border: 1px solid white;
+                border: 1px solid;
                 width: 40px;
                 height: 40px;
                 display: flex;

@@ -3,6 +3,7 @@ use crate::{check_err, conf::*, AppState};
 use axum::{extract::State, response::Redirect};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use hyper::{Body, Request};
+use urlencoding::encode;
 
 // Log user out
 pub async fn logout(
@@ -38,25 +39,28 @@ pub async fn logout(
             cookie.set_path("/");
 
             // Redirect to the home page
-            let msg = "You have been logged out";
             Ok((
                 jar.add(cookie),
-                Redirect::to(&format!("{}/login?msg={}", special_route, msg)),
+                Redirect::to(&format!(
+                    "{}/login?msg={}&status=success",
+                    special_route,
+                    encode("You have been logged out.")
+                )),
             ))
         } else {
             // Redirect to the home page
-            let msg = "You are not logged in";
             Err(Redirect::to(&format!(
-                "{}/login?msg={}",
-                special_route, msg
+                "{}/login?msg={}&status=warning",
+                special_route,
+                encode("You are not logged in.")
             )))
         }
     } else {
         // Redirect to the home page
-        let msg = "You are not logged in";
         Err(Redirect::to(&format!(
-            "{}/login?msg={}",
-            special_route, msg
+            "{}/login?msg={}&status=waring",
+            special_route,
+            encode("You are not logged in.")
         )))
     }
 }

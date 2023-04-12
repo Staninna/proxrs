@@ -74,7 +74,7 @@ pub async fn login_page(
 
     // Get the msg and color from the query
     let msg = get_query_param(&req, "msg").unwrap_or("".to_string());
-    let color = get_query_param(&req, "color").unwrap_or("".to_string());
+    let status = get_query_param(&req, "status").unwrap_or("".to_string());
 
     let msg = match msg.is_empty() {
         // Msg is empty
@@ -89,7 +89,7 @@ pub async fn login_page(
                     <span class="closebtn" onclick="closeAlert();">&times;</span>
                     <p>{}</p>
                 </div>"#,
-                color, msg
+                status, msg
             )
         }
     };
@@ -127,7 +127,7 @@ pub async fn login_req(
         Ok(body) => body,
         Err(_) => {
             return Err(Redirect::to(&format!(
-                "{}/login?msg={}",
+                "{}/login?msg={}&status=error",
                 &special_route,
                 encode("Oops! Something went wrong. Please give it another try.")
             )));
@@ -137,7 +137,7 @@ pub async fn login_req(
         Ok(data) => data,
         Err(_) => {
             return Err(Redirect::to(&format!(
-                "{}/login?msg={}",
+                "{}/login?msg={}&status=error",
                 &special_route,
                 encode("Oops! We couldn't process the information you provided. Can you please try again?")
             )));
@@ -151,7 +151,7 @@ pub async fn login_req(
     // TODO: Add database support
     if username.is_empty() || password.is_empty() {
         return Err(Redirect::to(&format!(
-            "{}/login?msg={}",
+            "{}/login?msg={}&status=warning",
             &special_route,
             encode("Sorry, either your username or password is incorrect. Please double-check and try again.")
         )));
@@ -171,7 +171,7 @@ pub async fn login_req(
         // Check if the session token is valid
         if sessions.validate_session_by_token(session_token).await && user == username {
             return Err(Redirect::to(&format!(
-                "{}/login?msg={}",
+                "{}/login?msg={}&status=success",
                 &special_route,
                 encode("You are already logged in. No need to log in again.",)
             )));
