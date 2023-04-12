@@ -56,8 +56,15 @@ pub async fn login_page(
     // Get the title
     let title = match username {
         // User is logged in
-        Some(username) => format!("Welcome, {}!", username),
+        Some(username) => {
+            // Capitalize the first letter of the username
+            let mut username = username.chars();
+            let first = username.next().unwrap().to_uppercase().to_string();
+            let rest = username.as_str();
 
+            // Return the title
+            format!("Welcome, {}!", first + rest)
+        }
         // User is not logged in
         None => "Log in".to_string(),
     };
