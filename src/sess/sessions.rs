@@ -30,19 +30,6 @@ impl Sessions {
         session
     }
 
-    pub async fn get_session_by_user(&self, user: &str) -> Option<Session> {
-        // Enumerate through all the sessions
-        for (_, session) in self.lock().await.iter() {
-            // If the session's user is the same as the user, return the session
-            if session.user == user {
-                return Some(session.clone());
-            }
-        }
-
-        // If no session was found, return None
-        None
-    }
-
     pub async fn validate_session_by_token(&self, token: &str) -> bool {
         // Check if the session exists
         if let Some(_) = self.lock().await.get(token) {
