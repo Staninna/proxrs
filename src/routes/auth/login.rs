@@ -44,7 +44,7 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
             format!(
                 r#"
                 <div class="alert">
-                    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                    <span class="closebtn" onclick="closeAlert();">&times;</span>
                     <p>{}</p>
                 </div>"#,
                 msg
