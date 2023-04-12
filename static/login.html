@@ -12,9 +12,20 @@
             rel="stylesheet"
         />
         <style>
+            :root {
+                --background-color: #333;
+                --primary-color: #1f1f1f;
+                --secondary-color: #f1f1f1;
+                --hover-color: #ddd;
+                --disabled-color: #aaa;
+                --success-color: #4caf50;
+                --warning-color: #ff9800;
+                --error-color: #f44336;
+            }
+
             body {
-                background-color: #333;
-                color: #f1f1f1;
+                background-color: var(--background-color);
+                color: var(--secondary-color);
                 font-family: "Nunito", sans-serif;
                 font-size: 16px;
                 line-height: 1.4;
@@ -30,7 +41,7 @@
                 max-width: 800px;
                 margin: 0 auto;
                 padding: 20px;
-                background-color: #1f1f1f;
+                background-color: var(--primary-color);
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
                 border-radius: 5px;
             }
@@ -38,25 +49,37 @@
             h1 {
                 font-size: 32px;
                 margin-bottom: 20px;
-                color: #f1f1f1;
+                color: var(--secondary-color);
             }
 
             p {
                 margin-bottom: 20px;
             }
 
+            a {
+                text-decoration: none;
+                color: var(--background-color);
+            }
+
             button {
                 padding: 10px 20px;
-                background-color: #f1f1f1;
-                color: #333;
+                background-color: var(--secondary-color);
+                color: var(--background-color);
                 border: none;
                 border-radius: 5px;
                 font-size: 16px;
                 cursor: pointer;
+                height: 40px;
             }
 
             button:hover {
-                background-color: #ddd;
+                background-color: var(--hover-color);
+            }
+
+            button:disabled,
+            input[type="submit"]:disabled {
+                background-color: var(--disabled-color);
+                cursor: not-allowed;
             }
 
             .form-group {
@@ -70,8 +93,8 @@
             input[type="password"] {
                 margin-top: 10px;
                 padding: 10px 20px;
-                background-color: #f1f1f1;
-                color: #333;
+                background-color: var(--secondary-color);
+                color: var(--background-color);
                 border: none;
                 border-radius: 5px;
                 font-size: 16px;
@@ -80,8 +103,8 @@
 
             input[type="submit"] {
                 padding: 10px 20px;
-                background-color: #f1f1f1;
-                color: #333;
+                background-color: var(--secondary-color);
+                color: var(--background-color);
                 border: none;
                 border-radius: 5px;
                 font-size: 16px;
@@ -89,30 +112,104 @@
                 height: 40px;
             }
 
-            input[type="submit"]:hover {
+            input[type="submit"]:hover::not(:disabled) {
                 background-color: #ddd;
             }
+
+            .alert {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                color: black;
+                padding: 10px 20px;
+                margin-bottom: 20px;
+                border-radius: 5px;
+                font-size: 18px;
+            }
+
+            .alert.success {
+                background-color: var(--success-color);
+            }
+
+            .alert.warning {
+                background-color: var(--warning-color);
+            }
+
+            .alert.error {
+                background-color: var(--error-color);
+            }
+
+            .closebtn {
+                font-size: 22px;
+                font-weight: bold;
+                cursor: pointer;
+                border-radius: 5px;
+                border: 1px solid;
+                width: 40px;
+                min-width: 40px;
+                height: 40px;
+                min-height: 40px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
         </style>
+
+        <script>
+            // Close alert
+            function closeAlert() {
+                document.querySelector(".alert").style.display = "none";
+            }
+
+            // Clear url query string
+            if (window.history.replaceState) {
+                window.history.replaceState(
+                    null,
+                    null,
+                    window.location.href.split("?")[0]
+                );
+            }
+        </script>
     </head>
     <body>
         <div class="container">
             <header>
-                <h1>Log in/out</h1>
-                <form action="{{ logout_endpoint }}" method="post">
-                    <input class="logout" type="submit" value="Log out" />
+                <h1>{{title}}</h1>
+                <form action="{{logout_route}}" method="post">
+                    <input
+                        class="logout"
+                        type="submit"
+                        value="Log out"
+                        {{login_enabled}}
+                    />
                 </form>
             </header>
 
-            <form action="{{ login_endpoint }}" method="post">
+            {{msg}}
+
+            <form action="{{login_route}}" method="post">
                 <div class="form-group">
                     <label for="username">Enter your username:</label>
-                    <input type="text" name="username" id="username" />
+                    <input type="text" name="username" id="username" required />
                 </div>
                 <div class="form-group">
                     <label for="password">Enter your password:</label>
-                    <input type="password" name="password" id="password" />
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        required
+                    />
                 </div>
-                <input class="login" type="submit" value="Log in" />
+                <div>
+                    <input class="login" type="submit" value="Log in" />
+                    <button
+                        onclick="window.location.href = '/'"
+                        {{login_enabled}}
+                    >
+                        Use site
+                    </button>
+                </div>
             </form>
         </div>
     </body>

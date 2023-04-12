@@ -1,22 +1,41 @@
-use hyper::{Body, Response, StatusCode};
-use tera::{Context, Tera};
+use thiserror::Error;
 
-pub async fn internal_error(tera: &Tera) -> Result<Response<Body>, hyper::Error> {
-    let mut response = match tera.render("internal_error.html", &Context::new()) {
-        Ok(html) => Response::new(Body::from(html)),
-        // Error while loading the internal error page
-        Err(_) => Response::new(Body::from(
-            "Internal error while loading internal error page",
-        )),
+// Global error type (inherits from all other errors)
+#[derive(Error, Debug)]
+pub enum Error {
+    // Missing config variable
+    #[error("Missing config variable: {0}")]
+    MissingConfigVar(String),
+
+    // Missing environment variable
+    #[error("Missing environment variable: {0}")]
+    MissingEnvVar(String),
+
+    // Empty environment variable
+    #[error("Empty environment variable: {0}")]
+    EmptyEnvVar(String),
+
+    // Dotenv error
+    #[error("Dotenv: {0}")]
+    Dotenv(#[from] dotenv::Error),
+
+    // Database error
+    #[error("Database: {0}")]
+    Database(#[from] rusqlite::Error),
+}
+
+#[macro_export]
+macro_rules! check_err {
+    ($e:expr) => {
+        $e.unwrap_or_else(|err| {
+            // Get line/file/charecter
+            let (line, file, charecter) = (line!(), file!(), column!());
+
+            // Print the error
+            eprintln!("{}:{}:{}: {}", file, line, charecter, err);
+
+            // Exit the program
+            std::process::exit(1);
+        })
     };
-
-    // Set the status code
-    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
-
-    // Set the content type header
-    response
-        .headers_mut()
-        .insert("Content-Type", "text/html".parse().unwrap());
-
-    Ok(response)
 }

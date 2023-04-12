@@ -1,76 +1,93 @@
-use config::ConfigKey::*;
-use db::Db;
-use hyper::{service::service_fn, Body, Request, Server};
-use proxy::proxy;
-use session::SessionStore;
-use std::net::SocketAddr;
-use tera::Tera;
-use tower::make::Shared;
-mod admin;
-mod auth;
-mod config;
-mod db;
+mod conf;
+mod database;
 mod error;
-mod proxy;
-mod session;
+mod routes;
+mod sess;
+
+use crate::{conf::*, database::*, error::*, routes::*, sess::*};
+
+use axum::{
+    routing::{get, post},
+    Router, Server,
+};
+use hyper::{client::HttpConnector, Body};
+use hyper_tls::HttpsConnector;
+use std::net::SocketAddr;
+
+type Client = hyper::Client<HttpsConnector<HttpConnector>, Body>;
+
+#[derive(Clone)]
+pub struct AppState {
+    sessions: Sessions,
+    client: Client,
+    conf: Config,
+    db: Db,
+}
 
 #[tokio::main]
-async fn main() {
-    // Load configiuration settings
-    let conf = config::config().await;
+async fn main() -> Result<(), Error> {
+    // Initialize the config
+    let conf = check_err!(init::conf());
 
-    // Initialize the sessions map
-    let sessions = SessionStore::new();
+    // Initialize the database
+    let db_file = check_err!(conf.get(DbFile));
+    let db = check_err!(Db::new(db_file).await);
 
-    // Initialize the database connection pool
-    let db_file = conf.get(DbFile).await;
-    let db = Db::new(&db_file).await;
+    // Initialize the sessions
+    let sessions = Sessions::new();
 
-    // Initialize the template engine
-    let template_dir = conf.get(TemplateDir).await;
-    let tera = match Tera::new(&format!("{}/*.html", template_dir)) {
-        Ok(t) => t,
-        Err(e) => {
-            eprintln!("Error loading templates: {}", e);
-            std::process::exit(1);
-        }
-    };
-
-    // Create the hyper service
-    let db_clone = db.clone();
-    let tera_clone = tera.clone();
-    let conf_clone = conf.clone();
-    let service = Shared::new(service_fn(move |req: Request<Body>| {
-        let sessions = sessions.clone();
-        let conf = conf_clone.clone();
-        let tera = tera_clone.clone();
-        let db = db_clone.clone();
-
-        proxy(db, req, conf, tera, sessions)
-    }));
+    // Create the client
+    let client = hyper::Client::builder().build(HttpsConnector::new());
 
     // Define the server address
-    let ip = conf.get(Ip).await.parse().unwrap();
-    let port = conf.get(Port).await.parse().unwrap();
+    let ip = check_err!(check_err!(conf.get(Ip)).parse::<std::net::IpAddr>());
+    let port = check_err!(check_err!(conf.get(Port)).parse::<u16>());
     let addr = SocketAddr::new(ip, port);
 
-    // Create the server with graceful shutdown capabilities
+    // Get special routes
+    let special_route = check_err!(conf.get(SpecialRoute));
+    let login_route = special_route.to_owned() + "/login";
+    let logout_route = special_route.to_owned() + "/logout";
+    let admin_route = special_route.to_owned() + "/admin";
+
+    // Create the app
+    let app = Router::new()
+        // Add the special routes
+        .route(&login_route, get(login_page))
+        .route(&login_route, post(login_req))
+        .route(&logout_route, post(logout))
+        .route(&admin_route, get(|| async { "admin" })) // TODO: Implement admin get
+        .route(&admin_route, post(|| async { "admin" })) // TODO: Implement admin post
+        // Add proxy route
+        .fallback(proxy)
+        // Add the app state
+        .with_state(AppState {
+            sessions,
+            client,
+            conf,
+            db,
+        });
+
+    // Start the server
     let server = Server::bind(&addr)
-        .serve(service)
+        .serve(app.into_make_service())
         .with_graceful_shutdown(async {
-            tokio::signal::ctrl_c().await.unwrap();
+            tokio::signal::ctrl_c()
+                .await
+                .expect("failed to install CTRL+C signal handler");
             println!("Shutting down...");
 
-            // Perform any necessary cleanup here
-            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+            // Any cleanup code here
 
             println!("Goodbye!");
             std::process::exit(0);
         });
 
-    // Start the server
+    // Run the server
     println!("Listening on http://{}", addr);
     if let Err(e) = server.await {
-        eprintln!("Server error: {}", e);
+        eprintln!("server error: {}", e);
     }
+
+    unreachable!()
 }
