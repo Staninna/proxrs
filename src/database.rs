@@ -23,6 +23,18 @@ impl Db {
         Ok(db)
     }
 
+    pub async fn validate_user(&self, username: &str, password: &str) -> Result<bool, Error> {
+        // Get a connection
+        let conn = self.conn().await;
+
+        // Do the query
+        let mut stmt = conn.prepare("SELECT * FROM users WHERE username = ? AND password = ?;")?;
+        let mut rows = stmt.query(params![username, password])?;
+
+        // Return if the user exists
+        Ok(rows.next()?.is_some())
+    }
+
     async fn init(&self) -> Result<(), Error> {
         // Get a connection from the pool
         let conn = self.conn().await;

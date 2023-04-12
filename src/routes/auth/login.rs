@@ -128,6 +128,7 @@ pub async fn login_req(
     // Extract the app state
     let mut sessions = app_state.sessions;
     let conf = app_state.conf;
+    let db = app_state.db;
 
     // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
@@ -157,9 +158,21 @@ pub async fn login_req(
     // Get the username and password
     let (username, password) = (login_data.username, login_data.password);
 
-    // Check if the username and password are correct
-    // TODO: Add database support
-    if username.is_empty() || password.is_empty() {
+    // Validate the user
+    let db_result = db.validate_user(&username, &password).await;
+    let valid_user = match db_result {
+        Ok(valid_user) => valid_user,
+        Err(_) => {
+            return Err(Redirect::to(&format!(
+                "{}/login?msg={}&status=error",
+                &special_route,
+                encode("Oops! Something went wrong. Please give it another try.")
+            )));
+        }
+    };
+
+    // Give response if the user is not valid
+    if !valid_user {
         return Err(Redirect::to(&format!(
             "{}/login?msg={}&status=warning",
             &special_route,
