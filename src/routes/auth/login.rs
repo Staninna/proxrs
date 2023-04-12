@@ -113,6 +113,13 @@ pub async fn login_req(
         // Get the session token
         let session_token = cookie.value();
 
+        // Get user from the session token
+        let user = app_state
+            .to_owned()
+            .sessions
+            .get_user_by_token(session_token)
+            .await;
+
         // Check if the session token is valid
         if app_state
             .to_owned()
@@ -124,7 +131,10 @@ pub async fn login_req(
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
-                urlencoding::encode("You are already logged in. No need to log in again.")
+                urlencoding::encode(&format!(
+                    "{} you are already logged in. No need to log in again.",
+                    user.unwrap()
+                ))
             )));
         }
     }
