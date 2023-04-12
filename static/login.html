@@ -62,7 +62,10 @@
             }
 
             button:hover {
-                background-color: #ddd;
+            button:disabled,
+            input[type="submit"]:disabled {
+                background-color: var(--disabled-color);
+                cursor: not-allowed;
             }
 
             .form-group {
@@ -95,7 +98,7 @@
                 height: 40px;
             }
 
-            input[type="submit"]:hover {
+            input[type="submit"]:hover::not(:disabled) {
                 background-color: #ddd;
             }
 
@@ -159,7 +162,12 @@
             <header>
                 <h1>{{title}}</h1>
                 <form action="{{logout_route}}" method="post">
-                    <input class="logout" type="submit" value="Log out" />
+                    <input
+                        class="logout"
+                        type="submit"
+                        value="Log out"
+                        {{login_enabled}}
+                    />
                 </form>
             </header>
 
@@ -181,8 +189,11 @@
                 </div>
                 <div>
                     <input class="login" type="submit" value="Log in" />
-                    <button onclick="window.location.href = '/'">
-                        <a href="/">Use site</a>
+                    <button
+                        onclick="window.location.href = '/'"
+                        {{login_enabled}}
+                    >
+                        Use site
                     </button>
                 </div>
             </form>

@@ -54,6 +54,7 @@ pub async fn login_page(
     };
 
     // Get the title
+    let mut login_enabled = "disabled";
     let title = match username {
         // User is logged in
         Some(username) => {
@@ -61,6 +62,9 @@ pub async fn login_page(
             let mut username = username.chars();
             let first = username.next().unwrap().to_uppercase().to_string();
             let rest = username.as_str();
+
+            // Enable the home button
+            login_enabled = "enabled";
 
             // Return the title
             format!("Welcome, {}!", first + rest)
@@ -71,6 +75,9 @@ pub async fn login_page(
 
     // Replace the title in the login page
     login_page = login_page.replace("{{title}}", &title);
+
+    // Replace the enabled in the login page
+    login_page = login_page.replace("{{login_enabled}}", login_enabled);
 
     // Get the msg and color from the query
     let msg = get_query_param(&req, "msg").unwrap_or("".to_string());
