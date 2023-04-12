@@ -72,23 +72,24 @@ pub async fn login_page(
     // Replace the title in the login page
     login_page = login_page.replace("{{title}}", &title);
 
-    // Get msg from the query
-    let msg = req.uri().query().unwrap_or("").replace("msg=", "");
+    // Get the msg and color from the query
+    let msg = get_query_param(&req, "msg").unwrap_or("".to_string());
+    let color = get_query_param(&req, "color").unwrap_or("".to_string());
+
     let msg = match msg.is_empty() {
         // Msg is empty
         true => "".to_string(),
 
         // Decode the msg
-        // TODO: Make that the alert can have different colors based on the msg
         false => {
             let msg = decode(&msg).unwrap();
             format!(
                 r#"
-                <div class="alert">
+                <div class="alert {}">
                     <span class="closebtn" onclick="closeAlert();">&times;</span>
                     <p>{}</p>
                 </div>"#,
-                msg
+                color, msg
             )
         }
     };
@@ -190,4 +191,25 @@ pub async fn login_req(
 
     // Redirect the user to the home page
     Ok((jar.add(cookie), Redirect::to("/")))
+}
+
+fn get_query_param(req: &Request<Body>, param: &str) -> Option<String> {
+    // Get the query
+    let query = req.uri().query().unwrap_or("");
+
+    // Get the param
+    let param = query
+        .split('&')
+        .filter(|s| s.starts_with(&format!("{}=", param)))
+        .map(|s| s.trim_start_matches(&format!("{}=", param)))
+        .next()
+        .unwrap_or("")
+        .to_string();
+
+    // Check if the param is empty
+    if param.is_empty() {
+        None
+    } else {
+        Some(param)
+    }
 }
