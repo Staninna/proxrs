@@ -1,13 +1,13 @@
 use crate::{check_err, conf::*, AppState};
 
 use axum::{extract::State, response::Redirect};
-use axum_extra::extract::cookie::CookieJar;
+use axum_extra::extract::cookie::{Cookie, CookieJar};
 use hyper::{Body, Request};
 
 // Log user out
 pub async fn logout(
     State(app_state): State<AppState>,
-    mut jar: CookieJar,
+    jar: CookieJar,
     _req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
     // Extract the app state
@@ -33,14 +33,15 @@ pub async fn logout(
             // Delete the session
             sessions.delete_session_by_token(session_token).await;
 
-            // Delete the cookie
-            jar = jar.remove(cookie);
+            // Unset the cookie
+            let mut cookie = Cookie::new(cookie_name, "");
+            cookie.set_path("/");
 
             // Redirect to the home page
             let msg = "You have been logged out";
             Ok((
-                jar,
-                Redirect::to(&format!("{}/?msg={}", special_route, msg)),
+                jar.add(cookie),
+                Redirect::to(&format!("{}/login?msg={}", special_route, msg)),
             ))
         } else {
             // Redirect to the home page
@@ -53,7 +54,7 @@ pub async fn logout(
     } else {
         // Redirect to the home page
         let msg = "You are not logged in";
-        Err(Redirect::temporary(&format!(
+        Err(Redirect::to(&format!(
             "{}/login?msg={}",
             special_route, msg
         )))
