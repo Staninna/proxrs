@@ -128,10 +128,7 @@ pub async fn login_req(
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
-                encode(&format!(
-                    "{} you are already logged in. No need to log in again.",
-                    user
-                ))
+                encode("You are already logged in. No need to log in again.",)
             )));
         } else {
             // Delete the cookie
