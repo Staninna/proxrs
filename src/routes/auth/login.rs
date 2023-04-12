@@ -38,7 +38,8 @@ pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -
         // Msg is empty
         true => "".to_string(),
 
-        // Decode the msg // TODO: Make that the alert can have different colors based on the msg
+        // Decode the msg
+        // TODO: Make that the alert can have different colors based on the msg
         false => {
             let msg = decode(&msg).unwrap_or(std::borrow::Cow::Borrowed(""));
             format!(
@@ -103,7 +104,8 @@ pub async fn login_req(
     // Get the username and password
     let (username, password) = (login_data.username, login_data.password);
 
-    // Check if the username and password are correct // TODO: Add database support
+    // Check if the username and password are correct
+    // TODO: Add database support
     if username.is_empty() || password.is_empty() {
         return Err(Redirect::to(&format!(
             "{}/login?msg={}",
