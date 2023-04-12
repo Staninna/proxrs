@@ -175,21 +175,8 @@ pub async fn login_req(
                 encode("You are already logged in. No need to log in again.",)
             )));
         } else {
-            // Delete the cookie
-            let jar = jar.remove(cookie.clone());
-
             // Delete the session
             sessions.delete_session_by_token(session_token).await;
-
-            // Redirect the user login page
-            return Ok((
-                jar,
-                Redirect::to(&format!(
-                    "{}/login?msg={}",
-                    &special_route,
-                    encode("You were logged out. Please log in again.")
-                )),
-            ));
         }
     }
 
