@@ -44,7 +44,10 @@ pub async fn login_page(
         let user = sessions.get_user_by_token(session_token).await;
 
         // Check if the session token is valid
-        if sessions.validate_session_by_token(session_token).await {
+        if sessions
+            .validate_session_by_token(session_token, &conf)
+            .await
+        {
             Some(user)
         } else {
             None
@@ -176,7 +179,11 @@ pub async fn login_req(
         let user = sessions.get_user_by_token(session_token).await;
 
         // Check if the session token is valid
-        if sessions.validate_session_by_token(session_token).await && user == username {
+        if sessions
+            .validate_session_by_token(session_token, &conf)
+            .await
+            && user == username
+        {
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}&status=success",
                 &special_route,
@@ -189,12 +196,11 @@ pub async fn login_req(
     }
 
     // Create a new session
-    let session = sessions.new_session(username).await;
+    let session = sessions.new_session(username, &conf).await;
 
     // Create a new cookie
     let mut cookie = Cookie::new(cookie_name, session.token);
     cookie.set_path("/");
-    // TODO: set expiration time
 
     // Redirect the user to the home page
     Ok((

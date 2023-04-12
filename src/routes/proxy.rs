@@ -28,7 +28,10 @@ pub async fn proxy(
     };
 
     // Validate cookie
-    match sessions.validate_session_by_token(cookie.value()).await {
+    match sessions
+        .validate_session_by_token(cookie.value(), &conf)
+        .await
+    {
         true => (),
         false => {
             // Redirect to login page

@@ -30,7 +30,10 @@ pub async fn logout(
         let session_token = cookie.value();
 
         // Check if the session token is valid
-        if sessions.validate_session_by_token(session_token).await {
+        if sessions
+            .validate_session_by_token(session_token, &conf)
+            .await
+        {
             // Delete the session
             sessions.delete_session_by_token(session_token).await;
 
