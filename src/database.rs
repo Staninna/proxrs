@@ -38,6 +38,13 @@ impl Db {
             params![],
         )?;
 
+        // Add a debug user if not exists
+        conn.execute(
+            "INSERT INTO users (username, password, is_admin) VALUES ('stan', 'stan', 1)
+                ON CONFLICT DO NOTHING;",
+            params![],
+        )?;
+
         // Create the proxy table
         conn.execute(
             "CREATE TABLE IF NOT EXISTS proxy (
