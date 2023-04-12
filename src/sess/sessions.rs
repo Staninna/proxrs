@@ -20,19 +20,14 @@ impl Sessions {
         self.store.lock().await
     }
 
-    pub async fn new_session(&mut self, user: String) -> Option<Session> {
-        // Check if the user already has a session
-        if let Some(_) = self.get_session_by_user(&user).await {
-            return None;
-        }
-
+    pub async fn new_session(&mut self, user: String) -> Session {
         // Create a new session
         let token = Uuid::new_v4().to_string();
         let session = Session::new(user, token.clone());
         self.lock().await.insert(token, session.clone());
 
         // Return the session
-        Some(session)
+        session
     }
 
     pub async fn get_session_by_user(&self, user: &str) -> Option<Session> {
