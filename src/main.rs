@@ -55,7 +55,7 @@ async fn main() -> Result<(), Error> {
         // Add the special routes
         .route(&login_route, get(login_page))
         .route(&login_route, post(login_req))
-        .route(&logout_route, post(|| async { "logout" })) // TODO: Implement logout post
+        .route(&logout_route, post(logout))
         .route(&admin_route, get(|| async { "admin" })) // TODO: Implement admin get
         .route(&admin_route, post(|| async { "admin" })) // TODO: Implement admin post
         // Add proxy route
