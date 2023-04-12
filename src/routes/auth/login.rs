@@ -105,14 +105,21 @@ pub async fn login_req(
         )));
     }
 
-    // Create a new session
-    let session = match app_state.to_owned().sessions.new_session(username).await {
-        // No session was found of the user
-        Some(session) => session,
+    // Get cookie name
+    let cookie_name = check_err!(app_state.conf.get(CookieName));
 
-        // Session was found of the user
-        // TODO: Check cookie to see if the user is already logged in
-        None => {
+    // Check if the cookie exists
+    if let Some(cookie) = jar.get(&cookie_name) {
+        // Get the session token
+        let session_token = cookie.value();
+
+        // Check if the session token is valid
+        if app_state
+            .to_owned()
+            .sessions
+            .validate_session_by_token(session_token)
+            .await
+        {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
@@ -120,10 +127,10 @@ pub async fn login_req(
                 urlencoding::encode("You are already logged in. No need to log in again.")
             )));
         }
-    };
+    }
 
-    // Get cookie name
-    let cookie_name = check_err!(app_state.conf.get(CookieName));
+    // Create a new session
+    let session = app_state.to_owned().sessions.new_session(username).await;
 
     // Create a new cookie
     let mut cookie = Cookie::new(cookie_name, session.token);
