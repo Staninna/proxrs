@@ -51,4 +51,8 @@ impl Sessions {
         // If the session doesn't exist, return None
         String::from("Unknown")
     }
+
+    pub async fn delete_session_by_token(&mut self, token: &str) {
+        self.lock().await.remove(token);
+    }
 }

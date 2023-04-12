@@ -115,15 +115,15 @@ pub async fn login_req(
     let cookie_name = check_err!(conf.get(CookieName));
 
     // Check if the cookie exists
-    if let Some(cookie) = jar.get(&cookie_name) {
+    if let Some(cookie) = jar.get(&cookie_name).cloned() {
         // Get the session token
         let session_token = cookie.value();
 
-        // Check if the session token is valid
-        if sessions.validate_session_by_token(session_token).await {
-            // Get user from the session token
-            let user = sessions.get_user_by_token(session_token).await;
+        // Get user from the session token
+        let user = sessions.get_user_by_token(session_token).await;
 
+        // Check if the session token is valid
+        if sessions.validate_session_by_token(session_token).await && user == username {
             let special_route = check_err!(conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
@@ -133,6 +133,23 @@ pub async fn login_req(
                     user
                 ))
             )));
+        } else {
+            // Delete the cookie
+            let jar = jar.remove(cookie.clone());
+
+            // Delete the session
+            sessions.delete_session_by_token(session_token).await;
+
+            // Redirect the user login page
+            let special_route = check_err!(conf.get(SpecialRoute));
+            return Ok((
+                jar,
+                Redirect::to(&format!(
+                    "{}/login?msg={}",
+                    &special_route,
+                    encode("You were logged out. Please log in again.")
+                )),
+            ));
         }
     }
 
