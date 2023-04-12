@@ -12,9 +12,11 @@ pub async fn login_page(
     jar: CookieJar,
     req: Request<Body>,
 ) -> Response<Body> {
+    // Extract the app state
     let conf = app_state.conf;
     let sessions = app_state.sessions;
 
+    // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
 
     // Get the login page
@@ -24,8 +26,7 @@ pub async fn login_page(
     // Read the login page
     let mut login_page = check_err!(tokio::fs::read_to_string(login_page).await);
 
-    // Get special routes
-
+    // Get the login and logout routes
     let login_route = special_route.to_owned() + "/login";
     let logout_route = special_route.to_owned() + "/logout";
 
@@ -106,9 +107,11 @@ pub async fn login_req(
     jar: CookieJar,
     req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
+    // Extract the app state
     let mut sessions = app_state.sessions;
     let conf = app_state.conf;
 
+    // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
 
     // Get data from the request using serde
