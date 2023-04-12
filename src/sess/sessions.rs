@@ -41,15 +41,11 @@ impl Sessions {
         // Check if the session exists
         let mut locked = self.lock().await;
 
-        println!("locked");
-
         let session = if let Some(session) = locked.get(token) {
             session
         } else {
             return false;
         };
-
-        println!("session");
 
         if session.is_not_expired() {
             // Get the expire time from the config
