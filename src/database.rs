@@ -50,12 +50,17 @@ impl Db {
             params![],
         )?;
 
-        // Add a debug user if not exists
-        conn.execute(
-            "INSERT INTO users (username, password, is_admin) VALUES ('stan', 'stan', 1)
-                ON CONFLICT DO NOTHING;",
-            params![],
-        )?;
+        // Get all users
+        let mut stmt = conn.prepare("SELECT * FROM users;")?;
+        let mut rows = stmt.query(params![])?;
+
+        // If there are no users, create the default admin user
+        if rows.next()?.is_none() {
+            conn.execute(
+                "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?);",
+                params!["stan", "stan", 1],
+            )?;
+        }
 
         // Create the proxy table
         conn.execute(
