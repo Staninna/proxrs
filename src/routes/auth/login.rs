@@ -1,7 +1,11 @@
 use crate::{check_err, conf::*, AppState};
 
-use axum::{extract::State, response::Response};
-use hyper::{header::SET_COOKIE, Body, Request, StatusCode};
+use axum::{
+    extract::State,
+    response::{Redirect, Response},
+};
+use axum_extra::extract::cookie::{Cookie, CookieJar};
+use hyper::{Body, Request, StatusCode};
 use serde::Deserialize;
 
 // Send the login page to the user
@@ -58,26 +62,32 @@ struct LoginData {
     password: String,
 }
 
-pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) -> Response<Body> {
+pub async fn login_req(
+    State(app_state): State<AppState>,
+    jar: CookieJar,
+    req: Request<Body>,
+) -> Result<(CookieJar, Redirect), Redirect> {
     // Get data from the request using serde
     let body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(body) => body,
         Err(_) => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
-            return redirect_to_login(
+            return Err(Redirect::to(&format!(
+                "{}/login?msg={}",
                 &special_route,
-                "Oops! Something went wrong. Please give it another try.",
-            );
+                urlencoding::encode("Oops! Something went wrong. Please give it another try.")
+            )));
         }
     };
     let login_data = match serde_urlencoded::from_bytes::<LoginData>(&body) {
         Ok(data) => data,
         Err(_) => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
-            return redirect_to_login(
+            return Err(Redirect::to(&format!(
+                "{}/login?msg={}",
                 &special_route,
-                "Oops! We couldn't process the information you provided. Can you please try again?",
-            );
+                urlencoding::encode("Oops! We couldn't process the information you provided. Can you please try again?")
+            )));
         }
     };
 
@@ -87,10 +97,11 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
     // Check if the username and password are correct // TODO: Add database support
     if username.is_empty() || password.is_empty() {
         let special_route = check_err!(app_state.conf.get(SpecialRoute));
-        return redirect_to_login(
+        return Err(Redirect::to(&format!(
+            "{}/login?msg={}",
             &special_route,
-            "Sorry, either your username or password is incorrect. Please double-check and try again."
-        );
+            urlencoding::encode("Sorry, either your username or password is incorrect. Please double-check and try again.")
+        )));
     }
 
     // Create a new session
@@ -99,39 +110,25 @@ pub async fn login_req(State(app_state): State<AppState>, req: Request<Body>) ->
         Some(session) => session,
 
         // Session was found of the user
+        // TODO: Check cookie to see if the user is already logged in
         None => {
             let special_route = check_err!(app_state.conf.get(SpecialRoute));
-            return redirect_to_login(
+            return Err(Redirect::to(&format!(
+                "{}/login?msg={}",
                 &special_route,
-                "You are already logged in. No need to log in again.",
-            );
+                urlencoding::encode("You are already logged in. No need to log in again.")
+            )));
         }
     };
 
     // Get cookie name
     let cookie_name = check_err!(app_state.conf.get(CookieName));
 
-    // Send the response with the session token
-    Response::builder()
-        .status(StatusCode::FOUND)
-        .header(SET_COOKIE, format!("{}={}", cookie_name, session.token))
-        .header("Location", "/")
-        .body(Body::empty())
-        .unwrap()
-}
+    // Create a new cookie
+    let mut cookie = Cookie::new(cookie_name, session.token);
+    cookie.set_path("/");
+    // TODO: set expiration time
 
-// Redirect the user to the login page
-fn redirect_to_login(special_route: &str, msg: &str) -> Response<Body> {
-    Response::builder()
-        .status(StatusCode::FOUND)
-        .header(
-            "Location",
-            format!(
-                "{}?msg={}",
-                special_route.to_owned() + "/login",
-                urlencoding::encode(msg)
-            ),
-        )
-        .body(Body::empty())
-        .unwrap()
+    // Redirect the user to the home page
+    Ok((jar.add(cookie), Redirect::to("/")))
 }
