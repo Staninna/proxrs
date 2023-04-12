@@ -10,15 +10,17 @@ use serde::Deserialize;
 
 // Send the login page to the user
 pub async fn login_page(State(app_state): State<AppState>, req: Request<Body>) -> Response<Body> {
+    let conf = app_state.conf;
+
     // Get the login page
-    let static_dir = check_err!(app_state.conf.get(StaticDir));
+    let static_dir = check_err!(conf.get(StaticDir));
     let login_page = static_dir + "/login.html";
 
     // Read the login page
     let mut login_page = check_err!(tokio::fs::read_to_string(login_page).await);
 
     // Get special routes
-    let special_route = check_err!(app_state.conf.get(SpecialRoute));
+    let special_route = check_err!(conf.get(SpecialRoute));
     let login_route = special_route.to_owned() + "/login";
     let logout_route = special_route.to_owned() + "/logout";
 
@@ -68,11 +70,14 @@ pub async fn login_req(
     jar: CookieJar,
     req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
+    let mut sessions = app_state.sessions;
+    let conf = app_state.conf;
+
     // Get data from the request using serde
     let body = match hyper::body::to_bytes(req.into_body()).await {
         Ok(body) => body,
         Err(_) => {
-            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+            let special_route = check_err!(conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
@@ -83,7 +88,7 @@ pub async fn login_req(
     let login_data = match serde_urlencoded::from_bytes::<LoginData>(&body) {
         Ok(data) => data,
         Err(_) => {
-            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+            let special_route = check_err!(conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
@@ -97,7 +102,7 @@ pub async fn login_req(
 
     // Check if the username and password are correct // TODO: Add database support
     if username.is_empty() || password.is_empty() {
-        let special_route = check_err!(app_state.conf.get(SpecialRoute));
+        let special_route = check_err!(conf.get(SpecialRoute));
         return Err(Redirect::to(&format!(
             "{}/login?msg={}",
             &special_route,
@@ -106,41 +111,32 @@ pub async fn login_req(
     }
 
     // Get cookie name
-    let cookie_name = check_err!(app_state.conf.get(CookieName));
+    let cookie_name = check_err!(conf.get(CookieName));
 
     // Check if the cookie exists
     if let Some(cookie) = jar.get(&cookie_name) {
         // Get the session token
         let session_token = cookie.value();
 
-        // Get user from the session token
-        let user = app_state
-            .to_owned()
-            .sessions
-            .get_user_by_token(session_token)
-            .await;
-
         // Check if the session token is valid
-        if app_state
-            .to_owned()
-            .sessions
-            .validate_session_by_token(session_token)
-            .await
-        {
-            let special_route = check_err!(app_state.conf.get(SpecialRoute));
+        if sessions.validate_session_by_token(session_token).await {
+            // Get user from the session token
+            let user = sessions.get_user_by_token(session_token).await;
+
+            let special_route = check_err!(conf.get(SpecialRoute));
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}",
                 &special_route,
                 urlencoding::encode(&format!(
                     "{} you are already logged in. No need to log in again.",
-                    user.unwrap()
+                    user
                 ))
             )));
         }
     }
 
     // Create a new session
-    let session = app_state.to_owned().sessions.new_session(username).await;
+    let session = sessions.new_session(username).await;
 
     // Create a new cookie
     let mut cookie = Cookie::new(cookie_name, session.token);

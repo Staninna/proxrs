@@ -41,14 +41,14 @@ impl Sessions {
         false
     }
 
-    pub async fn get_user_by_token(&self, token: &str) -> Option<String> {
+    pub async fn get_user_by_token(&self, token: &str) -> String {
         // Check if the session exists
         if let Some(session) = self.lock().await.get(token) {
             // If the session exists, return the user
-            return Some(session.user.clone());
+            return session.user.clone();
         }
 
         // If the session doesn't exist, return None
-        None
+        String::from("Unknown")
     }
 }
