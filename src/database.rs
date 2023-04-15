@@ -57,8 +57,8 @@ impl Db {
         // If there are no users, create the default admin user
         if rows.next()?.is_none() {
             conn.execute(
-                "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?);",
-                params!["stan", "stan", 1],
+                "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?), (?, ?, ?);",
+                params!["stan", "stan", 1, "admin", "admin", 0],
             )?;
         }
 
