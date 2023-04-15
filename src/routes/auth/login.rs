@@ -61,10 +61,10 @@ pub async fn login_page(
     // Generate the inline CSS for the admin button
     match admin {
         true => {
-            login_page = login_page.replace("{{admin_display}}", "inline");
+            login_page = login_page.replace("admin_display", "inline");
         }
         false => {
-            login_page = login_page.replace("{{admin_display}}", "none");
+            login_page = login_page.replace("admin_display", "none");
         }
     }
 
