@@ -153,6 +153,16 @@
                 justify-content: center;
                 align-items: center;
             }
+
+            .links {
+                display: flex;
+                gap: 10px;
+                height: 40px;
+            }
+
+            .admin-btn {
+                display: {{admin_display}};
+            }
         </style>
 
         <script>
@@ -201,13 +211,19 @@
                         required
                     />
                 </div>
-                <div>
+                <div class="links">
                     <input class="login" type="submit" value="Log in" />
                     <button
-                        onclick="window.location.href = '/'"
+                        onclick="window.location.href='/'"
                         {{login_enabled}}
                     >
                         Use site
+                    </button>
+                    <button
+                        class="admin-btn"
+                        onclick="window.location.href='{{admin_route}}'"
+                    >
+                        Manage
                     </button>
                 </div>
             </form>

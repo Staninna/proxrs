@@ -29,32 +29,45 @@ pub async fn login_page(
     // Get the login and logout routes
     let login_route = special_route.to_owned() + "/login";
     let logout_route = special_route.to_owned() + "/logout";
+    let admin_route = special_route.to_owned() + "/admin";
 
     // Replace the special routes in the login page
     login_page = login_page.replace("{{login_route}}", &login_route);
     login_page = login_page.replace("{{logout_route}}", &logout_route);
+    login_page = login_page.replace("{{admin_route}}", &admin_route);
 
     // Get username from cookie
     let cookie_name = check_err!(conf.get(CookieName));
-    let username = if let Some(cookie) = jar.get(&cookie_name).cloned() {
-        // Get the session token
-        let session_token = cookie.value();
-
-        // Get user from the session token
-        let user = sessions.get_user_by_token(session_token).await;
-
-        // Check if the session token is valid
-        if sessions
-            .validate_session_by_token(session_token, &conf)
-            .await
-        {
-            Some(user)
-        } else {
-            None
-        }
+    let session_token = if let Some(cookie) = jar.get(&cookie_name).cloned() {
+        Some(cookie.value().to_string())
     } else {
         None
     };
+
+    // Get the username from the session
+    let (username, admin) = match session_token {
+        Some(session_token) => {
+            // Get variables from the session
+            let username = sessions.get_user_by_token(&session_token).await;
+            let admin = sessions.get_admin_by_token(&session_token).await;
+
+            match username {
+                Some(username) => (Some(username), admin),
+                None => (None, false),
+            }
+        }
+        None => (None, false),
+    };
+
+    // Generate the inline CSS for the admin button
+    match admin {
+        true => {
+            login_page = login_page.replace("{{admin_display}}", "inline");
+        }
+        false => {
+            login_page = login_page.replace("{{admin_display}}", "none");
+        }
+    }
 
     // Get the title
     let mut login_enabled = "disabled";
@@ -195,7 +208,7 @@ pub async fn login_req(
         if sessions
             .validate_session_by_token(session_token, &conf)
             .await
-            && user == username
+            && user == Some(username.clone())
         {
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}&status=success",

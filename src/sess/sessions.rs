@@ -63,15 +63,25 @@ impl Sessions {
         }
     }
 
-    pub async fn get_user_by_token(&self, token: &str) -> String {
+    pub async fn get_user_by_token(&self, token: &str) -> Option<String> {
         // Check if the session exists
         if let Some(session) = self.lock().await.get(token) {
             // If the session exists, return the user
-            return session.user.clone();
+            return Some(session.user.clone());
         }
 
-        // If the session doesn't exist, return None
-        String::from("Unknown")
+        None
+    }
+
+    pub async fn get_admin_by_token(&self, token: &str) -> bool {
+        // Check if the session exists
+        if let Some(session) = self.lock().await.get(token) {
+            // If the session exists, return the admin status
+            return session.admin;
+        }
+
+        // If the session doesn't exist, return false
+        false
     }
 
     pub async fn delete_session_by_token(&mut self, token: &str) {
