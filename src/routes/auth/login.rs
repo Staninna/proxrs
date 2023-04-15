@@ -13,8 +13,7 @@ pub async fn login_page(
     req: Request<Body>,
 ) -> Response<Body> {
     // Extract the app state
-    let conf = app_state.conf;
-    let sessions = app_state.sessions;
+    let (sessions, _, conf, _) = app_state.extract();
 
     // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
@@ -139,9 +138,7 @@ pub async fn login_req(
     req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
     // Extract the app state
-    let mut sessions = app_state.sessions;
-    let conf = app_state.conf;
-    let db = app_state.db;
+    let (mut sessions, _, conf, db) = app_state.extract();
 
     // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));

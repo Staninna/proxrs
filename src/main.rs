@@ -3,8 +3,9 @@ mod database;
 mod error;
 mod routes;
 mod sess;
+mod state;
 
-use crate::{conf::*, database::*, error::*, routes::*, sess::*};
+use crate::{conf::*, database::*, error::*, routes::*, sess::*, state::*};
 
 use axum::{
     routing::{get, post},
@@ -16,28 +17,13 @@ use std::net::SocketAddr;
 
 type Client = hyper::Client<HttpsConnector<HttpConnector>, Body>;
 
-#[derive(Clone)]
-pub struct AppState {
-    sessions: Sessions,
-    client: Client,
-    conf: Config,
-    db: Db,
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    // Initialize the config
+    // Get the config
     let conf = check_err!(init::conf());
 
-    // Initialize the database
-    let db_file = check_err!(conf.get(DbFile));
-    let db = check_err!(Db::new(db_file).await);
-
-    // Initialize the sessions
-    let sessions = Sessions::new();
-
-    // Create the client
-    let client = hyper::Client::builder().build(HttpsConnector::new());
+    // Initialize the app state
+    let state = AppState::new(&conf).await;
 
     // Define the server address
     let ip = check_err!(check_err!(conf.get(Ip)).parse::<std::net::IpAddr>());
@@ -61,12 +47,7 @@ async fn main() -> Result<(), Error> {
         // Add proxy route
         .fallback(proxy)
         // Add the app state
-        .with_state(AppState {
-            sessions,
-            client,
-            conf,
-            db,
-        });
+        .with_state(state);
 
     // Start the server
     let server = Server::bind(&addr)

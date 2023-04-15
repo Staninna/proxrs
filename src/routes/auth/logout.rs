@@ -11,9 +11,8 @@ pub async fn logout(
     jar: CookieJar,
     _req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
-    // Extract the app state
-    let conf = app_state.conf;
-    let mut sessions = app_state.sessions;
+    // Extract the app state]
+    let (mut sessions, _, conf, _) = app_state.extract();
 
     // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));

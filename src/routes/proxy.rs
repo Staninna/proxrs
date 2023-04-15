@@ -12,9 +12,7 @@ pub async fn proxy(
     jar: CookieJar,
     mut req: Request<Body>,
 ) -> Result<Response<Body>, Redirect> {
-    let conf = app_state.conf;
-    let sessions = app_state.sessions;
-    let client = app_state.client;
+    let (sessions, client, conf, _) = app_state.extract();
 
     // Get cookie
     let cookie_name = check_err!(conf.get(CookieName));
