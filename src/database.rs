@@ -78,6 +78,18 @@ impl Db {
         Ok(())
     }
 
+    pub async fn is_admin(&self, username: &str) -> Result<bool, Error> {
+        // Get a connection
+        let conn = self.conn().await;
+
+        // Do the query
+        let mut stmt = conn.prepare("SELECT * FROM users WHERE username = ? AND is_admin = 1;")?;
+        let mut rows = stmt.query(params![username])?;
+
+        // Return if the user exists
+        Ok(rows.next()?.is_some())
+    }
+
     async fn conn(&self) -> MutexGuard<'_, Connection> {
         self.conn.lock().await
     }

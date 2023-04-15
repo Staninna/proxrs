@@ -209,7 +209,7 @@ pub async fn login_req(
     }
 
     // Create a new session
-    let session = sessions.new_session(username, &conf).await;
+    let session = sessions.new_session(username, &conf, &db).await;
 
     // Create a new cookie
     let mut cookie = Cookie::new(cookie_name, session.token);

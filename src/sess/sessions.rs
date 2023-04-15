@@ -22,7 +22,7 @@ impl Sessions {
         self.store.lock().await
     }
 
-    pub async fn new_session(&mut self, user: String, conf: &Config) -> Session {
+    pub async fn new_session(&mut self, user: String, conf: &Config, db: &Db) -> Session {
         // get expire time from config
         let expire_time = check_err!(conf.get(SessionExpireTime))
             .parse::<i64>()
@@ -30,7 +30,7 @@ impl Sessions {
 
         // Create a new session
         let token = Uuid::new_v4().to_string();
-        let session = Session::new(user, token.clone(), expire_time);
+        let session = Session::new(user, token.clone(), expire_time, db).await;
         self.lock().await.insert(token, session.clone());
 
         // Return the session
