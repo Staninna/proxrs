@@ -19,16 +19,6 @@ pub async fn logout(
     // Get cookie
     let cookie = jar.get(&cookie_name);
 
-    // Check if the cookie exists
-    if let None = cookie {
-        // Redirect to the home page
-        return Err(Redirect::to(&format!(
-            "{}/login?msg={}&status=waring",
-            special_route,
-            encode("You are not logged in.")
-        )));
-    };
-
     // Match the cookie
     let token = match cookie {
         Some(cookie) => cookie.value(),
