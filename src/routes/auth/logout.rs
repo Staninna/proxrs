@@ -11,56 +11,59 @@ pub async fn logout(
     jar: CookieJar,
     _req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
-    // Extract the app state]
+    // Initialize variables
     let (mut sessions, _, conf, _) = app_state.extract();
-
-    // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
-
-    // Get cookie name
     let cookie_name = check_err!(conf.get(CookieName));
 
     // Get cookie
-    let cookie = jar.get(&cookie_name).cloned();
+    let cookie = jar.get(&cookie_name);
 
     // Check if the cookie exists
-    if let Some(cookie) = cookie {
-        // Get the session token
-        let session_token = cookie.value();
+    if let None = cookie {
+        // Redirect to the home page
+        return Err(Redirect::to(&format!(
+            "{}/login?msg={}&status=waring",
+            special_route,
+            encode("You are not logged in.")
+        )));
+    };
 
-        // Check if the session token is valid
-        if sessions
-            .validate_session_by_token(session_token, &conf)
-            .await
-        {
-            // Delete the session
-            sessions.delete_session_by_token(session_token).await;
-
-            // Unset the cookie
-            let mut cookie = Cookie::new(cookie_name, "");
-            cookie.set_path("/");
-
+    // Match the cookie
+    let token = match cookie {
+        Some(cookie) => cookie.value(),
+        None => {
             // Redirect to the home page
-            Ok((
-                jar.add(cookie),
-                Redirect::to(&format!(
-                    "{}/login?msg={}&status=success",
-                    special_route,
-                    encode("You have been logged out.")
-                )),
-            ))
-        } else {
-            // Redirect to the home page
-            Err(Redirect::to(&format!(
+            return Err(Redirect::to(&format!(
                 "{}/login?msg={}&status=warning",
                 special_route,
                 encode("You are not logged in.")
-            )))
+            )));
         }
+    };
+
+    // Check if the session token is valid
+    if sessions.validate_session_by_token(token, &conf).await {
+        // Delete the session
+        sessions.delete_session_by_token(token).await;
+
+        // Unset the cookie
+        let mut cookie = Cookie::new(cookie_name, "");
+        cookie.set_path("/");
+
+        // Redirect to the home page
+        Ok((
+            jar.add(cookie),
+            Redirect::to(&format!(
+                "{}/login?msg={}&status=success",
+                special_route,
+                encode("You have been logged out.")
+            )),
+        ))
     } else {
         // Redirect to the home page
         Err(Redirect::to(&format!(
-            "{}/login?msg={}&status=waring",
+            "{}/login?msg={}&status=warning",
             special_route,
             encode("You are not logged in.")
         )))
