@@ -161,6 +161,7 @@
             }
 
             .admin-btn {
+                /* If the admin is logged in, display the button */
                 display: admin_display;
             }
         </style>
@@ -187,6 +188,7 @@
     <body>
         <div class="container">
             <header>
+                <!-- Dynamic title Username or Log in -->
                 <h1>{{title}}</h1>
                 <form action="{{logout_route}}" method="post">
                     <input
@@ -198,6 +200,7 @@
                 </form>
             </header>
 
+            <!-- Show alert if there is a message -->
             {{msg}}
 
             <form action="{{login_route}}" method="post">
@@ -216,12 +219,14 @@
                 </div>
                 <div class="links">
                     <input class="login" type="submit" value="Log in" />
+                    <!-- Disable button if not logged in -->
                     <button
                         onclick="window.location.href='/'"
                         {{login_enabled}}
                     >
                         Use site
                     </button>
+                    <!-- Show button if admin is logged in -->
                     <button
                         class="admin-btn"
                         onclick="window.location.href='{{admin_route}}'"
