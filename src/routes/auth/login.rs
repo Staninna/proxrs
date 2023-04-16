@@ -12,13 +12,9 @@ pub async fn login_page(
     jar: CookieJar,
     req: Request<Body>,
 ) -> Response<Body> {
-    // Extract the app state
+    // Initialize variables
     let (sessions, _, conf, _) = app_state.extract();
-
-    // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
-
-    // Get the login page
     let static_dir = check_err!(conf.get(StaticDir));
     let login_page = static_dir + "/login.html";
 
@@ -35,37 +31,38 @@ pub async fn login_page(
     login_page = login_page.replace("{{logout_route}}", &logout_route);
     login_page = login_page.replace("{{admin_route}}", &admin_route);
 
-    // Get username from cookie
+    // Get cookie
     let cookie_name = check_err!(conf.get(CookieName));
-    let session_token = if let Some(cookie) = jar.get(&cookie_name).cloned() {
-        Some(cookie.value().to_string())
-    } else {
-        None
+    let cookie = jar.get(&cookie_name);
+
+    // Get session
+    let session = match cookie {
+        Some(cookie) => sessions.get(cookie.value()).await,
+        None => None,
     };
 
     // Get the username from the session
-    let (username, admin) = match session_token {
-        Some(session_token) => {
+    let (username, admin) = match session {
+        Some(session) => {
             // Get variables from the session
-            let username = sessions.get_user_by_token(&session_token).await;
-            let admin = sessions.get_admin_by_token(&session_token).await;
+            let username = session.user.clone();
+            let admin = session.admin.clone();
 
-            match username {
-                Some(username) => (Some(username), admin),
-                None => (None, false),
+            // Check if the session is expired
+            if session.expired() {
+                (None, false)
+            } else {
+                (Some(username), admin)
             }
         }
         None => (None, false),
     };
 
     // Generate the inline CSS for the admin button
-    match admin {
-        true => {
-            login_page = login_page.replace("admin_display", "inline");
-        }
-        false => {
-            login_page = login_page.replace("admin_display", "none");
-        }
+    if admin {
+        login_page = login_page.replace("admin_display", "inline");
+    } else {
+        login_page = login_page.replace("admin_display", "none");
     }
 
     // Get the title
