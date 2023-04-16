@@ -99,14 +99,14 @@ pub async fn login_page(
     let status = get_query_param(&req, "status").unwrap_or("".to_string());
 
     if !msg.is_empty() {
-        let msg = decode(&msg).unwrap();
-        format!(
+        let msg = format!(
             r#"
                 <div class="alert {}">
                     <span class="closebtn" onclick="closeAlert();">&times;</span>
                     <p>{}</p>
                 </div>"#,
-            status, msg
+            status,
+            decode(&msg).unwrap()
         );
 
         // Replace the msg in the login page
