@@ -27,7 +27,7 @@ pub async fn proxy(
     };
 
     // Get session
-    let session = match sessions.get(cookie.value()).await {
+    let mut session = match sessions.get(cookie.value()).await {
         Some(session) => session,
         None => {
             // Redirect to login page
@@ -40,6 +40,9 @@ pub async fn proxy(
         // Redirect to login page
         return Err(Redirect::to(&format!("{}/login", special_route)));
     }
+
+    // Renew session
+    session.renew();
 
     // Get the path
     let path = req.uri().path();

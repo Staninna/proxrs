@@ -43,7 +43,7 @@ pub async fn login_page(
 
     // Get the username from the session
     let (username, admin) = match session {
-        Some(session) => {
+        Some(mut session) => {
             // Get variables from the session
             let username = session.user.clone();
             let admin = session.admin.clone();
@@ -52,6 +52,9 @@ pub async fn login_page(
             if session.expired() {
                 (None, false)
             } else {
+                // Renew the session
+                session.renew();
+
                 (Some(username), admin)
             }
         }
@@ -194,7 +197,7 @@ pub async fn login_req(
 
     // Get the username from the session
     let username_from_session = match session {
-        Some(session) => {
+        Some(mut session) => {
             // Get variables from the session
             let username = session.user.clone();
 
@@ -202,6 +205,9 @@ pub async fn login_req(
             if session.expired() {
                 None
             } else {
+                // Renew the session
+                session.renew();
+
                 Some(username)
             }
         }
