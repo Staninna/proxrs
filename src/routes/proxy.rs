@@ -12,30 +12,34 @@ pub async fn proxy(
     jar: CookieJar,
     mut req: Request<Body>,
 ) -> Result<Response<Body>, Redirect> {
+    // Initlize variables
     let (sessions, client, conf, _) = app_state.extract();
+    let special_route = check_err!(conf.get(SpecialRoute));
+    let cookie_name = check_err!(conf.get(CookieName));
+    let redirect = Err(Redirect::to(&format!("{}/login", special_route)));
 
     // Get cookie
-    let cookie_name = check_err!(conf.get(CookieName));
     let cookie = match jar.get(&cookie_name) {
         Some(cookie) => cookie,
         None => {
             // Redirect to login page
-            let special_route = check_err!(conf.get(SpecialRoute));
-            return Err(Redirect::to(&format!("{}/login", special_route)));
+            return redirect;
         }
     };
 
-    // Validate cookie
-    match sessions
-        .validate_session_by_token(cookie.value(), &conf)
-        .await
-    {
-        true => (),
-        false => {
+    // Get session
+    let session = match sessions.get(cookie.value()).await {
+        Some(session) => session,
+        None => {
             // Redirect to login page
-            let special_route = check_err!(conf.get(SpecialRoute));
-            return Err(Redirect::to(&format!("{}/login", special_route)));
+            return redirect;
         }
+    };
+
+    // Validate session
+    if !session.expired() {
+        // Redirect to login page
+        return redirect;
     }
 
     // Get the path
