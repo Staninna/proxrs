@@ -131,10 +131,8 @@ pub async fn login_req(
     jar: CookieJar,
     req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
-    // Extract the app state
+    // Initialize variables
     let (mut sessions, _, conf, db) = app_state.extract();
-
-    // Get special routes
     let special_route = check_err!(conf.get(SpecialRoute));
 
     // Get data from the request using serde
@@ -186,30 +184,37 @@ pub async fn login_req(
 
     // Get cookie name
     let cookie_name = check_err!(conf.get(CookieName));
+    let cookie = jar.get(&cookie_name);
 
-    // Check if the cookie exists
-    if let Some(cookie) = jar.get(&cookie_name).cloned() {
-        // Get the session token
-        let session_token = cookie.value();
+    // Get session
+    let session = match cookie {
+        Some(cookie) => sessions.get(cookie.value()).await,
+        None => None,
+    };
 
-        // Get user from the session token
-        let user = sessions.get_user_by_token(session_token).await;
+    // Get the username from the session
+    let username_from_session = match session {
+        Some(session) => {
+            // Get variables from the session
+            let username = session.user.clone();
 
-        // Check if the session token is valid
-        if sessions
-            .validate_session_by_token(session_token, &conf)
-            .await
-            && user == Some(username.clone())
-        {
-            return Err(Redirect::to(&format!(
-                "{}/login?msg={}&status=success",
-                &special_route,
-                encode("You are already logged in. No need to log in again.",)
-            )));
-        } else {
-            // Delete the session
-            sessions.delete_session_by_token(session_token).await;
+            // Check if the session is expired
+            if session.expired() {
+                None
+            } else {
+                Some(username)
+            }
         }
+        None => None,
+    };
+
+    // Check if the user is already logged in
+    if username_from_session.is_some() {
+        return Err(Redirect::to(&format!(
+            "{}/login?msg={}&status=warning",
+            &special_route,
+            encode("You are already logged in.")
+        )));
     }
 
     // Create a new session
