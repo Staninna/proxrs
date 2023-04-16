@@ -41,9 +41,9 @@ impl Sessions {
         }
     }
 
-    pub async fn del(&mut self, token: &str) -> Result<(), ()> {
+    pub async fn delete(&mut self, session: Session) -> Result<(), ()> {
         let mut sessions = self.lock().await;
-        match sessions.remove(token) {
+        match sessions.remove(&session.token) {
             Some(_) => Ok(()),
             None => Err(()),
         }
