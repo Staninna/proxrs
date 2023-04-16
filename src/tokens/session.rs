@@ -25,8 +25,8 @@ impl Session {
         }
     }
 
-    pub(super) fn is_not_expired(&self) -> bool {
-        self.expire_time > Utc::now()
+    pub fn expired(&self) -> bool {
+        Utc::now() > self.expire_time
     }
 
     pub fn renew(&mut self, expire_time: i64) {

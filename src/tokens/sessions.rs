@@ -18,12 +18,8 @@ impl Sessions {
         }
     }
 
-    async fn lock(&self) -> tokio::sync::MutexGuard<'_, HashMap<String, Session>> {
-        self.store.lock().await
-    }
-
     pub async fn new_session(&mut self, user: String, conf: &Config, db: &Db) -> Session {
-        // get expire time from config
+        // Get expire time from config
         let expire_time = check_err!(conf.get(SessionExpireTime))
             .parse::<i64>()
             .unwrap();
@@ -37,54 +33,23 @@ impl Sessions {
         session
     }
 
-    pub async fn validate_session_by_token(&self, token: &str, conf: &Config) -> bool {
-        // Check if the session exists
-        let mut locked = self.lock().await;
-
-        let session = if let Some(session) = locked.get(token) {
-            session
-        } else {
-            return false;
-        };
-
-        if session.is_not_expired() {
-            // Get the expire time from the config
-            let expire_time = check_err!(conf.get(SessionExpireTime))
-                .parse::<i64>()
-                .unwrap();
-
-            // If the session is not expired, renew it
-            locked.get_mut(token).unwrap().renew(expire_time);
-            true
-        } else {
-            // If the session is expired, delete it
-            locked.remove(token);
-            false
+    pub async fn get(&self, token: &str) -> Option<Session> {
+        let sessions = self.lock().await;
+        match sessions.get(token) {
+            Some(session) => Some(session.clone()),
+            None => None,
         }
     }
 
-    pub async fn get_user_by_token(&self, token: &str) -> Option<String> {
-        // Check if the session exists
-        if let Some(session) = self.lock().await.get(token) {
-            // If the session exists, return the user
-            return Some(session.user.clone());
+    pub async fn del(&mut self, token: &str) -> Result<(), ()> {
+        let mut sessions = self.lock().await;
+        match sessions.remove(token) {
+            Some(_) => Ok(()),
+            None => Err(()),
         }
-
-        None
     }
 
-    pub async fn get_admin_by_token(&self, token: &str) -> bool {
-        // Check if the session exists
-        if let Some(session) = self.lock().await.get(token) {
-            // If the session exists, return the admin status
-            return session.admin;
-        }
-
-        // If the session doesn't exist, return false
-        false
-    }
-
-    pub async fn delete_session_by_token(&mut self, token: &str) {
-        self.lock().await.remove(token);
+    async fn lock(&self) -> tokio::sync::MutexGuard<'_, HashMap<String, Session>> {
+        self.store.lock().await
     }
 }
