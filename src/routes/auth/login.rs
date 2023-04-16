@@ -95,26 +95,23 @@ pub async fn login_page(
     let msg = get_query_param(&req, "msg").unwrap_or("".to_string());
     let status = get_query_param(&req, "status").unwrap_or("".to_string());
 
-    let msg = match msg.is_empty() {
-        // Msg is empty
-        true => "".to_string(),
-
-        // Decode the msg
-        false => {
-            let msg = decode(&msg).unwrap();
-            format!(
-                r#"
+    if !msg.is_empty() {
+        let msg = decode(&msg).unwrap();
+        format!(
+            r#"
                 <div class="alert {}">
                     <span class="closebtn" onclick="closeAlert();">&times;</span>
                     <p>{}</p>
                 </div>"#,
-                status, msg
-            )
-        }
-    };
+            status, msg
+        );
 
-    // Replace the msg in the login page
-    login_page = login_page.replace("{{msg}}", &msg);
+        // Replace the msg in the login page
+        login_page = login_page.replace("{{msg}}", &msg);
+    } else {
+        // Replace the msg in the login page
+        login_page = login_page.replace("{{msg}}", "");
+    }
 
     // Send the login page
     Response::builder()
