@@ -17,13 +17,10 @@ pub async fn logout(
     let cookie_name = check_err!(conf.get(CookieName));
 
     // Get cookie
-    let cookie = jar.get(&cookie_name);
-
-    // Match the cookie
-    let token = match cookie {
-        Some(cookie) => cookie.value(),
+    let cookie = match jar.get(&cookie_name) {
+        Some(cookie) => cookie,
         None => {
-            // Redirect to the home page
+            // Redirect to login page
             return Err(Redirect::to(&format!(
                 "{}/login?msg={}&status=warning",
                 special_route,
@@ -32,30 +29,53 @@ pub async fn logout(
         }
     };
 
-    // Check if the session token is valid
-    if sessions.validate_session_by_token(token, &conf).await {
-        // Delete the session
-        sessions.delete_session_by_token(token).await;
-
-        // Unset the cookie
-        let mut cookie = Cookie::new(cookie_name, "");
-        cookie.set_path("/");
-
-        // Redirect to the home page
-        Ok((
-            jar.add(cookie),
-            Redirect::to(&format!(
-                "{}/login?msg={}&status=success",
+    // Get session
+    let session = match sessions.get(cookie.value()).await {
+        Some(session) => session,
+        None => {
+            // Redirect to login page
+            return Err(Redirect::to(&format!(
+                "{}/login?msg={}&status=warning",
                 special_route,
-                encode("You have been logged out.")
-            )),
-        ))
-    } else {
-        // Redirect to the home page
-        Err(Redirect::to(&format!(
+                encode("You are not logged in.")
+            )));
+        }
+    };
+
+    // Check if the session is expired
+    if session.expired() {
+        // Redirect to the login page
+        return Err(Redirect::to(&format!(
             "{}/login?msg={}&status=warning",
             special_route,
             encode("You are not logged in.")
-        )))
+        )));
     }
+
+    // Delete the session
+    match sessions.delete(session).await {
+        Ok(_) => (),
+        Err(()) => {
+            // Redirect to the login page
+            return Err(Redirect::to(&format!(
+                "{}/login?msg={}&status=warning",
+                special_route,
+                encode("You are not logged in.")
+            )));
+        }
+    }
+
+    // Unset the cookie
+    let mut cookie = Cookie::new(cookie_name, "");
+    cookie.set_path("/");
+
+    // Redirect to the login page
+    Ok((
+        jar.add(cookie),
+        Redirect::to(&format!(
+            "{}/login?msg={}&status=success",
+            special_route,
+            encode("You have been logged out.")
+        )),
+    ))
 }
