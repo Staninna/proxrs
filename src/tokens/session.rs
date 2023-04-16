@@ -7,8 +7,8 @@ pub struct Session {
     pub admin: bool,
     pub user: String,
     pub token: String,
-    pub renew_time: DateTime<Utc>,
-    pub expire_time: DateTime<Utc>,
+    renew_time: DateTime<Utc>,
+    expire_time: DateTime<Utc>,
 }
 
 impl Session {
