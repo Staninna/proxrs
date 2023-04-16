@@ -27,29 +27,40 @@ impl Sessions {
         // Create a new session
         let token = Uuid::new_v4().to_string();
         let session = Session::new(user, token.clone(), expire_time, db).await;
-        self.lock().await.insert(token, session.clone());
+        self.store().await.insert(token, session.clone());
 
         // Return the session
         session
     }
 
+    // Get the session from the store
+    // TODO: Make this return an useful error
     pub async fn get(&self, token: &str) -> Option<Session> {
-        let sessions = self.lock().await;
+        // Get the sessions from the store
+        let sessions = self.store().await;
+
+        // Get the session
         match sessions.get(token) {
             Some(session) => Some(session.clone()),
             None => None,
         }
     }
 
+    // Remove the session from the store
+    // TODO: Make this return an useful error
     pub async fn delete(&mut self, session: Session) -> Result<(), ()> {
-        let mut sessions = self.lock().await;
+        // Get the sessions from the store
+        let mut sessions = self.store().await;
+
+        // Remove the session
         match sessions.remove(&session.token) {
             Some(_) => Ok(()),
             None => Err(()),
         }
     }
 
-    async fn lock(&self) -> tokio::sync::MutexGuard<'_, HashMap<String, Session>> {
+    // Get the sessions from the store
+    async fn store(&self) -> tokio::sync::MutexGuard<'_, HashMap<String, Session>> {
         self.store.lock().await
     }
 }
