@@ -8,6 +8,7 @@ use sha2::Digest;
 use urlencoding::{decode, encode};
 
 // Send the login page to the user
+// TODO: If there are no users in the database send page to make first admin user
 pub async fn login_page(
     State(app_state): State<AppState>,
     jar: CookieJar,
