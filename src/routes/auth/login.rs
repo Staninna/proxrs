@@ -4,6 +4,7 @@ use axum::{extract::State, response::Redirect};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use hyper::{Body, Request, Response, StatusCode};
 use serde::Deserialize;
+use sha2::Digest;
 use urlencoding::{decode, encode};
 
 // Send the login page to the user
@@ -113,6 +114,11 @@ pub async fn login_req(
 
     // Get the username and password
     let (username, password) = (login_data.username, login_data.password);
+
+    // Hash the password
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(password);
+    let password = hex::encode(hasher.finalize());
 
     // Validate the user
     let db_result = db.validate_user(&username, &password).await;

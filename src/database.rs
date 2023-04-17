@@ -1,6 +1,7 @@
 use super::*;
 
 use rusqlite::{params, Connection};
+use sha2::Digest;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -56,9 +57,21 @@ impl Db {
 
         // If there are no users, create the default admin user
         if rows.next()?.is_none() {
+            // Hash the passwords
+            let stan_pass = "stan";
+            let mut hasher = sha2::Sha256::new();
+            hasher.update(stan_pass);
+            let stan_pass = hex::encode(hasher.finalize());
+
+            let admin_pass = "admin";
+            let mut hasher = sha2::Sha256::new();
+            hasher.update(admin_pass);
+            let admin_pass = hex::encode(hasher.finalize());
+
+            // Insert the users
             conn.execute(
                 "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?), (?, ?, ?);",
-                params!["stan", "stan", 1, "admin", "admin", 0],
+                params!["stan", stan_pass, 1, "admin", admin_pass, 0],
             )?;
         }
 
