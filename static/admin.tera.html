@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Log in</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --background-color: #333;
+                --primary-color: #1f1f1f;
+                --secondary-color: #f1f1f1;
+                --hover-color: #ddd;
+                --dark-hover-color: #444;
+                --disabled-color: #aaa;
+                --success-color: #4caf50;
+                --warning-color: #ff9800;
+                --error-color: #f44336;
+            }
+
+            body {
+                background-color: var(--background-color);
+                color: var(--secondary-color);
+                font-family: "Nunito", sans-serif;
+                font-size: 16px;
+                line-height: 1.4;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .base {
+                background-color: var(--secondary-color);
+                color: var(--background-color);
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 10px 20px;
+            }
+
+            .content-container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: var(--primary-color);
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                border-radius: 5px;
+            }
+
+            .title {
+                font-size: 32px;
+                margin-bottom: 20px;
+                color: var(--secondary-color);
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+                font-size: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .form-input[type="text"],
+            .form-input[type="password"] {
+                margin-top: 10px;
+            }
+
+            button.base:hover,
+            input[type="submit"].base:hover {
+                background-color: var(--hover-color);
+            }
+
+            .alert {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                color: black;
+                margin-bottom: 20px;
+                font-size: 18px;
+            }
+
+            .alert.success {
+                background-color: var(--success-color);
+            }
+
+            .alert.warning {
+                background-color: var(--warning-color);
+            }
+
+            .alert.error {
+                background-color: var(--error-color);
+            }
+
+            .close-btn {
+                font-size: 22px;
+                font-weight: bold;
+                cursor: pointer;
+                border-radius: 5px;
+                border: 1px solid;
+                width: 40px;
+                min-width: 40px;
+                height: 40px;
+                min-height: 40px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            th,
+            td {
+                padding: 10px;
+                text-align: left;
+                border-bottom: 1px solid var(--secondary-color);
+            }
+
+            tr:hover:not(thead tr) {
+                background-color: var(--dark-hover-color);
+            }
+
+            #tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+        </style>
+
+        <script>
+            // Close alert
+            function closeAlert() {
+                document.querySelector(".alert").style.display = "none";
+            }
+
+            // Toggle tab when clicked on (1 at a time visible)
+            function toggleTab(tab) {
+                const users = document.querySelector("#users");
+                const proxies = document.querySelector("#proxies");
+
+                switch (tab) {
+                    case "users":
+                        users.style.display = "block";
+                        proxies.style.display = "none";
+                        window.location.hash = "#users";
+                        break;
+                    case "proxies":
+                        users.style.display = "none";
+                        proxies.style.display = "block";
+                        window.location.hash = "#proxies";
+                        break;
+                }
+
+                // Set active tab
+                if (tab === "users") {
+                    document.querySelector("#users-tab").style.borderBottom =
+                        "1px solid var(--secondary-color)";
+                    document.querySelector("#proxies-tab").style.borderBottom =
+                        "1px solid transparent";
+                } else {
+                    document.querySelector("#users-tab").style.borderBottom =
+                        "1px solid transparent";
+                    document.querySelector("#proxies-tab").style.borderBottom =
+                        "1px solid var(--secondary-color)";
+                }
+            }
+
+            // Close alert after 5 seconds
+            setTimeout(closeAlert, 5000);
+
+            // Clear url query string
+            if (window.history.replaceState) {
+                window.history.replaceState(
+                    null,
+                    null,
+                    window.location.href.split("?")[0]
+                );
+            }
+
+            // Set active tab
+            window.onload = function () {
+                const hash = window.location.hash;
+                if (hash === "#proxies") {
+                    toggleTab("proxies");
+                } else {
+                    toggleTab("users");
+                }
+            };
+        </script>
+    </head>
+    <body>
+        <div class="content-container">
+            <header>
+                <h1 class="title">{{ title }}</h1>
+            </header>
+
+            {% if msg %}
+            <div class="alert {{ status }}">
+                <span class="close-btn" onclick="closeAlert();">&times;</span>
+                <p>{{ msg }}</p>
+            </div>
+            {% endif %}
+
+            <div id="tabs">
+                <h2 id="users-tab" onclick="toggleTab('users')">Users</h2>
+                <h2 id="proxies-tab" onclick="toggleTab('proxies')">Proxies</h2>
+            </div>
+
+            <div id="users">
+                {% if users %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.role }}</td>
+                            <td>
+                                <div class="actions">
+                                    <form
+                                        action="{{ delete_route }}"
+                                        method="post"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="id"
+                                            value="{{ user.id }}"
+                                        />
+                                        <input
+                                            class="base"
+                                            type="submit"
+                                            value="Delete"
+                                        />
+                                    </form>
+                                    <form
+                                        action="{{ update_route }}"
+                                        method="post"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="id"
+                                            value="{{ user.id }}"
+                                        />
+                                        <input
+                                            class="base"
+                                            type="submit"
+                                            value="Update"
+                                        />
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No users found.</p>
+                {% endif %}
+            </div>
+            <div id="proxies">
+                {% if proxies %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>IP</th>
+                            <th>Port</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proxy in proxies %}
+                        <tr>
+                            <td>{{ proxy.name }}</td>
+                            <td>{{ proxy.ip }}</td>
+                            <td>{{ proxy.port }}</td>
+                            <td>
+                                <div class="actions">
+                                    <form
+                                        action="{{ delete_route }}"
+                                        method="post"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="id"
+                                            value="{{ proxy.id }}"
+                                        />
+                                        <input
+                                            class="base"
+                                            type="submit"
+                                            value="Delete"
+                                        />
+                                    </form>
+                                    <form
+                                        action="{{ update_route }}"
+                                        method="post"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="id"
+                                            value="{{ proxy.id }}"
+                                        />
+                                        <input
+                                            class="base"
+                                            type="submit"
+                                            value="Update"
+                                        />
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No proxies found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </body>
+</html>

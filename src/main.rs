@@ -42,8 +42,7 @@ async fn main() -> Result<(), Error> {
         .route(&login_route, get(login_page))
         .route(&login_route, post(login_req))
         .route(&logout_route, post(logout))
-        .route(&admin_route, get(|| async { "admin" })) // TODO: Implement admin get
-        .route(&admin_route, post(|| async { "admin" })) // TODO: Implement admin post
+        .route(&admin_route, get(admin_page))
         // Add proxy route
         .fallback(proxy)
         // Add the app state
