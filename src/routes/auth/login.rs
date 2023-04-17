@@ -13,23 +13,14 @@ pub async fn login_page(
     req: Request<Body>,
 ) -> Response<Body> {
     // Initialize variables
-    let (sessions, _, conf, _, _) = app_state.extract();
+    let (sessions, _, conf, tera, _) = app_state.extract();
     let special_route = check_err!(conf.get(SpecialRoute));
-    let static_dir = check_err!(conf.get(StaticDir));
-    let login_page = static_dir + "/login.html";
+    let mut context = tera::Context::new();
 
-    // Read the login page
-    let mut login_page = check_err!(tokio::fs::read_to_string(login_page).await);
-
-    // Get the login and logout routes
-    let login_route = special_route.to_owned() + "/login";
-    let logout_route = special_route.to_owned() + "/logout";
-    let admin_route = special_route.to_owned() + "/admin";
-
-    // Replace the special routes in the login page
-    login_page = login_page.replace("{{login_route}}", &login_route);
-    login_page = login_page.replace("{{logout_route}}", &logout_route);
-    login_page = login_page.replace("{{admin_route}}", &admin_route);
+    // Generate the routes
+    context.insert("login_route", &(special_route.to_owned() + "/login"));
+    context.insert("logout_route", &(special_route.to_owned() + "/logout"));
+    context.insert("admin_route", &(special_route.to_owned() + "/admin"));
 
     // Get cookie
     let cookie_name = check_err!(conf.get(CookieName));
@@ -41,80 +32,40 @@ pub async fn login_page(
         None => None,
     };
 
-    // Get the username from the session
-    let (username, admin) = match session {
-        Some(mut session) => {
-            // Get variables from the session
-            let username = session.user.clone();
-            let admin = session.admin.clone();
+    // Get the username, admin and logged in status from the session
+    if let Some(session) = session {
+        // Capitalize the first letter of the username
+        let mut username = session.user.chars();
+        let first = username.next().unwrap().to_uppercase().to_string();
+        let rest = username.as_str();
+        let username = first + rest;
 
-            // Check if the session is expired
-            if session.expired() {
-                (None, false)
-            } else {
-                // Renew the session
-                session.renew();
-
-                (Some(username), admin)
-            }
-        }
-        None => (None, false),
-    };
-
-    // Generate the inline CSS for the admin button
-    if admin {
-        login_page = login_page.replace("admin_display", "inline");
+        // Add the username, admin and logged in status to the context
+        context.insert("admin", &session.admin);
+        context.insert("logged_in", &true);
+        context.insert("title", &format!("Welcome, {}!", username));
     } else {
-        login_page = login_page.replace("admin_display", "none");
+        // Add the username, admin and logged in status to the context
+        context.insert("admin", &false);
+        context.insert("logged_in", &false);
+        context.insert("title", &"Log in");
     }
-
-    // Get the title
-    let mut login_enabled = "disabled";
-    let title = match username {
-        // User is logged in
-        Some(username) => {
-            // Capitalize the first letter of the username
-            let mut username = username.chars();
-            let first = username.next().unwrap().to_uppercase().to_string();
-            let rest = username.as_str();
-
-            // Enable the home button
-            login_enabled = "enabled";
-
-            // Return the title
-            format!("Welcome, {}!", first + rest)
-        }
-        // User is not logged in
-        None => "Log in".to_string(),
-    };
-
-    // Replace the title in the login page
-    login_page = login_page.replace("{{title}}", &title);
-
-    // Replace the enabled in the login page
-    login_page = login_page.replace("{{login_enabled}}", login_enabled);
 
     // Get the msg and color from the query
-    let msg = get_query_param(&req, "msg").unwrap_or("".to_string());
-    let status = get_query_param(&req, "status").unwrap_or("".to_string());
+    if let Some(msg) = get_query_param(&req, "msg") {
+        let msg_url_safe = match decode(&msg) {
+            Ok(msg) => msg,
+            Err(_) => todo!("Handle error when decoding msg"),
+        };
 
-    if !msg.is_empty() {
-        let msg = format!(
-            r#"
-                <div class="alert {}">
-                    <span class="closebtn" onclick="closeAlert();">&times;</span>
-                    <p>{}</p>
-                </div>"#,
-            status,
-            decode(&msg).unwrap()
-        );
-
-        // Replace the msg in the login page
-        login_page = login_page.replace("{{msg}}", &msg);
-    } else {
-        // Replace the msg in the login page
-        login_page = login_page.replace("{{msg}}", "");
+        context.insert("msg", &msg_url_safe);
     }
+    if let Some(status) = get_query_param(&req, "status") {
+        context.insert("status", &status);
+    }
+
+    // Render the login page
+    let login_page = check_err!(tera.render("login.tera.html", &context));
 
     // Send the login page
     Response::builder()

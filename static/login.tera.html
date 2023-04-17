@@ -159,11 +159,6 @@
                 gap: 10px;
                 height: 40px;
             }
-
-            .admin-btn {
-                /* If the admin is logged in, display the button */
-                display: admin_display;
-            }
         </style>
 
         <script>
@@ -188,22 +183,22 @@
     <body>
         <div class="container">
             <header>
-                <!-- Dynamic title Username or Log in -->
-                <h1>{{title}}</h1>
-                <form action="{{logout_route}}" method="post">
-                    <input
-                        class="logout"
-                        type="submit"
-                        value="Log out"
-                        {{login_enabled}}
-                    />
+                <h1>{{ title }}</h1>
+                {% if logged_in %}
+                <form action="{{ logout_route }}" method="post">
+                    <input class="logout" type="submit" value="Log out" />
                 </form>
+                {% endif %}
             </header>
 
-            <!-- Show alert if there is a message -->
-            {{msg}}
+            {% if msg %}
+            <div class="alert {{ status }}">
+                <span class="closebtn" onclick="closeAlert();">&times;</span>
+                <p>{{ msg }}</p>
+            </div>
+            {% endif %}
 
-            <form action="{{login_route}}" method="post">
+            <form action="{{ login_route }}" method="post">
                 <div class="form-group">
                     <label for="username">Enter your username:</label>
                     <input type="text" name="username" id="username" required />
@@ -219,20 +214,17 @@
                 </div>
                 <div class="links">
                     <input class="login" type="submit" value="Log in" />
-                    <!-- Disable button if not logged in -->
-                    <button
-                        onclick="window.location.href='/'"
-                        {{login_enabled}}
-                    >
-                        Use site
-                    </button>
-                    <!-- Show button if admin is logged in -->
+                    {% if logged_in %}
+                    <button onclick="window.location.href='/'">Use site</button>
+                    {% endif %}
+                    {% if admin %}
                     <button
                         class="admin-btn"
-                        onclick="window.location.href='{{admin_route}}'"
+                        onclick="window.location.href='{{ admin_route }}'"
                     >
                         Manage
                     </button>
+                    {% endif %}
                 </div>
             </form>
         </div>
