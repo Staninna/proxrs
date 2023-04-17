@@ -12,7 +12,7 @@ pub async fn logout(
     _req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
     // Initialize variables
-    let (mut sessions, _, conf, _) = app_state.extract();
+    let (mut sessions, _, conf, _, _) = app_state.extract();
     let special_route = check_err!(conf.get(SpecialRoute));
     let cookie_name = check_err!(conf.get(CookieName));
 

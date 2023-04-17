@@ -1,10 +1,13 @@
 use crate::*;
 
+use tera::Tera;
+
 #[derive(Clone)]
 pub struct AppState {
     sessions: Sessions,
     client: Client,
     conf: Config,
+    tera: Tera,
     db: Db,
 }
 
@@ -17,6 +20,10 @@ impl AppState {
         // Initialize the sessions
         let sessions = Sessions::new();
 
+        // Initialize the template engine
+        let static_path = check_err!(conf.get(StaticDir));
+        let tera = check_err!(Tera::new(&format!("{}/**/*", static_path)));
+
         // Create the client
         let client = hyper::Client::builder().build(HttpsConnector::new());
 
@@ -27,15 +34,17 @@ impl AppState {
             sessions,
             client,
             conf,
+            tera,
             db,
         }
     }
 
-    pub fn extract(&self) -> (Sessions, Client, Config, Db) {
+    pub fn extract(&self) -> (Sessions, Client, Config, Tera, Db) {
         (
             self.sessions.clone(),
             self.client.clone(),
             self.conf.clone(),
+            self.tera.clone(),
             self.db.clone(),
         )
     }

@@ -13,7 +13,7 @@ pub async fn login_page(
     req: Request<Body>,
 ) -> Response<Body> {
     // Initialize variables
-    let (sessions, _, conf, _) = app_state.extract();
+    let (sessions, _, conf, _, _) = app_state.extract();
     let special_route = check_err!(conf.get(SpecialRoute));
     let static_dir = check_err!(conf.get(StaticDir));
     let login_page = static_dir + "/login.html";
@@ -135,7 +135,7 @@ pub async fn login_req(
     req: Request<Body>,
 ) -> Result<(CookieJar, Redirect), Redirect> {
     // Initialize variables
-    let (mut sessions, _, conf, db) = app_state.extract();
+    let (mut sessions, _, conf, _, db) = app_state.extract();
     let special_route = check_err!(conf.get(SpecialRoute));
 
     // Get data from the request using serde

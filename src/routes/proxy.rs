@@ -13,7 +13,7 @@ pub async fn proxy(
     mut req: Request<Body>,
 ) -> Result<Response<Body>, Redirect> {
     // Initlize variables
-    let (sessions, client, conf, _) = app_state.extract();
+    let (sessions, client, conf, _, _) = app_state.extract();
     let special_route = check_err!(conf.get(SpecialRoute));
     let cookie_name = check_err!(conf.get(CookieName));
 
