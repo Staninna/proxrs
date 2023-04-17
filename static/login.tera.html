@@ -37,7 +37,17 @@
                 align-items: center;
             }
 
-            .container {
+            .base {
+                background-color: var(--secondary-color);
+                color: var(--background-color);
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 10px 20px;
+            }
+
+            .content-container {
                 max-width: 800px;
                 margin: 0 auto;
                 padding: 20px;
@@ -46,40 +56,10 @@
                 border-radius: 5px;
             }
 
-            h1 {
+            .title {
                 font-size: 32px;
                 margin-bottom: 20px;
                 color: var(--secondary-color);
-            }
-
-            p {
-                margin-bottom: 20px;
-            }
-
-            a {
-                text-decoration: none;
-                color: var(--background-color);
-            }
-
-            button {
-                padding: 10px 20px;
-                background-color: var(--secondary-color);
-                color: var(--background-color);
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                cursor: pointer;
-                height: 40px;
-            }
-
-            button:hover {
-                background-color: var(--hover-color);
-            }
-
-            button:disabled,
-            input[type="submit"]:disabled {
-                background-color: var(--disabled-color);
-                cursor: not-allowed;
             }
 
             .form-group {
@@ -89,31 +69,14 @@
                 flex-direction: column;
             }
 
-            input[type="text"],
-            input[type="password"] {
+            .form-input[type="text"],
+            .form-input[type="password"] {
                 margin-top: 10px;
-                padding: 10px 20px;
-                background-color: var(--secondary-color);
-                color: var(--background-color);
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                cursor: pointer;
             }
 
-            input[type="submit"] {
-                padding: 10px 20px;
-                background-color: var(--secondary-color);
-                color: var(--background-color);
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                cursor: pointer;
-                height: 40px;
-            }
-
-            input[type="submit"]:hover::not(:disabled) {
-                background-color: #ddd;
+            button.base:hover,
+            input[type="submit"].base:hover {
+                background-color: var(--hover-color);
             }
 
             .alert {
@@ -121,9 +84,7 @@
                 gap: 10px;
                 align-items: center;
                 color: black;
-                padding: 10px 20px;
                 margin-bottom: 20px;
-                border-radius: 5px;
                 font-size: 18px;
             }
 
@@ -139,7 +100,7 @@
                 background-color: var(--error-color);
             }
 
-            .closebtn {
+            .close-btn {
                 font-size: 22px;
                 font-weight: bold;
                 cursor: pointer;
@@ -181,19 +142,23 @@
         </script>
     </head>
     <body>
-        <div class="container">
+        <div class="content-container">
             <header>
-                <h1>{{ title }}</h1>
+                <h1 class="title">{{ title }}</h1>
                 {% if logged_in %}
                 <form action="{{ logout_route }}" method="post">
-                    <input class="logout" type="submit" value="Log out" />
+                    <input
+                        class="base form-input"
+                        type="submit"
+                        value="Log out"
+                    />
                 </form>
                 {% endif %}
             </header>
 
             {% if msg %}
-            <div class="alert {{ status }}">
-                <span class="closebtn" onclick="closeAlert();">&times;</span>
+            <div class="base alert {{ status }}">
+                <span class="close-btn" onclick="closeAlert();">&times;</span>
                 <p>{{ msg }}</p>
             </div>
             {% endif %}
@@ -201,25 +166,31 @@
             <form action="{{ login_route }}" method="post">
                 <div class="form-group">
                     <label for="username">Enter your username:</label>
-                    <input type="text" name="username" id="username" required />
+                    <input
+                        class="base form-input"
+                        type="text"
+                        name="username"
+                        required
+                    />
                 </div>
                 <div class="form-group">
                     <label for="password">Enter your password:</label>
                     <input
+                        class="base form-input"
                         type="password"
                         name="password"
-                        id="password"
                         required
                     />
                 </div>
                 <div class="links">
-                    <input class="login" type="submit" value="Log in" />
+                    <input class="base" type="submit" value="Log in" />
                     {% if logged_in %}
-                    <button onclick="window.location.href='/'">Use site</button>
-                    {% endif %}
-                    {% if admin %}
+                    <button class="base" onclick="window.location.href='/'">
+                        Use site
+                    </button>
+                    {% endif %} {% if admin %}
                     <button
-                        class="admin-btn"
+                        class="base"
                         onclick="window.location.href='{{ admin_route }}'"
                     >
                         Manage
