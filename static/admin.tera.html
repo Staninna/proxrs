@@ -182,6 +182,16 @@
                 }
             }
 
+            // Add event listener for when the url query string changes
+            window.addEventListener("popstate", function (event) {
+                const hash = window.location.hash;
+                if (hash === "#proxies") {
+                    toggleTab("proxies");
+                } else {
+                    toggleTab("users");
+                }
+            });
+
             // Close alert after 5 seconds
             setTimeout(closeAlert, 5000);
 
