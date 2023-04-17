@@ -142,6 +142,13 @@
                 gap: 10px;
                 margin-bottom: 20px;
             }
+
+            #tabs p {
+                font-size: 20px;
+                margin: 0;
+                padding: 10px 20px;
+                cursor: pointer;
+            }
         </style>
 
         <script>
@@ -229,8 +236,8 @@
             {% endif %}
 
             <div id="tabs">
-                <h2 id="users-tab" onclick="toggleTab('users')">Users</h2>
-                <h2 id="proxies-tab" onclick="toggleTab('proxies')">Proxies</h2>
+                <p id="users-tab" onclick="toggleTab('users')">Users</p>
+                <p id="proxies-tab" onclick="toggleTab('proxies')">Proxies</h2>
             </div>
 
             <div id="users">
