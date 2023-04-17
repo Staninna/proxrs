@@ -36,7 +36,7 @@ pub async fn proxy(
     };
 
     // Validate session
-    if !session.expired() {
+    if session.expired() {
         // Redirect to login page
         return Err(Redirect::to(&format!("{}/login", special_route)));
     }
