@@ -46,7 +46,7 @@ impl Db {
                     id          INTEGER PRIMARY KEY AUTOINCREMENT,
                     username    VARCHAR(255) NOT NULL,
                     password    VARCHAR(255) NOT NULL,
-                    is_admin    INTEGER NOT NULL
+                    admin       INTEGER NOT NULL
                 );",
             params![],
         )?;
@@ -70,7 +70,7 @@ impl Db {
 
             // Insert the users
             conn.execute(
-                "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?), (?, ?, ?);",
+                "INSERT INTO users (username, password, admin) VALUES (?, ?, ?), (?, ?, ?);",
                 params!["stan", stan_pass, 1, "admin", admin_pass, 0],
             )?;
         }
@@ -96,7 +96,7 @@ impl Db {
         let conn = self.conn().await;
 
         // Do the query
-        let mut stmt = conn.prepare("SELECT * FROM users WHERE username = ? AND is_admin = 1;")?;
+        let mut stmt = conn.prepare("SELECT * FROM users WHERE username = ? AND admin = 1;")?;
         let mut rows = stmt.query(params![username])?;
 
         // Return if the user exists
